@@ -99,3 +99,4 @@ Blockbench 是桌面 Electron 应用，DSH 是另一个运行时。两个插件�
 - 官方 wiki：<https://tacwiki.mcma.club/zh/gunpack>
 - TACZ 仓库：<https://github.com/MCModderAnchor/TACZ>
 - 格式规范速查：[`docs/tacz-wiki-authority.md`](docs/tacz-wiki-authority.md)
+- 贡献者与 AI 署名说明：[`CONTRIBUTORS.md`](CONTRIBUTORS.md)
