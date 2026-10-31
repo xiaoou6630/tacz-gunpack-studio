@@ -1,0 +1,53 @@
+{
+  "name": "dsh-tacz-gunpack",
+  "version": "0.1.0",
+  "description": "TACZ 枪包工坊 for DeepSeek Harness: a Director plus five role teammates, a deterministic build controller, Blockbench MCP orchestration, TACZ pack-format knowledge, and self-learning skills.",
+  "type": "module",
+  "main": "./index.mjs",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./index.mjs",
+    "./skills/*": "./skills/*",
+    "./preset/*": "./preset/*",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.mjs",
+    "lib",
+    "skills",
+    "preset",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaoou6630/tacz-gunpack-studio.git",
+    "directory": "packages/dsh-tacz-gunpack"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "tacz",
+    "gunpack",
+    "blockbench",
+    "mcp",
+    "agent"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.5 <0.3.0"
+  },
+  "license": "MIT",
+  "author": "xiaoou6630, DeepSeek"
+}

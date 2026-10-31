@@ -1,0 +1,19 @@
+blockbench-mcp 1.10.1-tacz.1
+
+License: GPL-3.0-only (see ../../LICENSES/GPL-3.0.txt)
+Upstream: https://github.com/jasonjgardner/blockbench-mcp-plugin
+Original author: Jason J. Gardner
+Fork: https://github.com/xiaoou6630/tacz-gunpack-studio
+Fork commit: 211c6afc2b556c6bb29b671bd0de356f8ecb076d
+
+Changes made in this fork:
+- added TACZ gun-pack tools: tacz_pack, tacz_gun, tacz_ammo, tacz_attachment,
+  tacz_icon_render, tacz_model_validate, tacz_guide, tacz_template_list,
+  tacz_texture_init
+- added TACZ ammo/attachment art support (lib/tacz/items.ts)
+- added flat/iso icon rendering with target size and flip support
+- added refit_*_view locator groups to gun templates
+- changed the risky_eval setting default from true to false
+- rewrote the TACZ workflow prompt and about page
+
+Rebuild from source: bun install --ignore-scripts && bun run build

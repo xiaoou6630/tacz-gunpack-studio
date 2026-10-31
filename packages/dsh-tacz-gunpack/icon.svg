@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TACZ Gun Pack Tools">
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M10 26h30l4-6h10v6h-4l-2 4H38v4h-8l-4 14h-7l3-14H10z" fill="#60a5fa"/>
+  <circle cx="46" cy="20" r="2.2" fill="#f8fafc"/>
+  <path d="M12 46h20v3H12z" fill="#38bdf8" opacity=".7"/>
+</svg>

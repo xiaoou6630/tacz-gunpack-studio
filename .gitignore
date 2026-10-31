@@ -1,0 +1,8 @@
+node_modules/
+/dist/
+*.log
+.DS_Store
+.env
+*.tgz
+*.zip
+!packages/dsh-tacz-gunpack/dsh-tacz-gunpack-0.1.0.tgz
