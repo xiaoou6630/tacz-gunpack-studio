@@ -213,6 +213,18 @@ profile 里的 `mcp-blockbench` 行是旧的。跑 `tacz_install_mcp url="..." f
 **升级后行为没变？**
 Blockbench 和 DSH 都各重启一次，两者都会把旧版本留在内存。
 
+**导入 `.animation.json` 后动画面板显示 0？**
+Blockbench 的动画面板导入读的是 **bbmodel 里已合并的 `animations[]`**，不是裸 Bedrock
+动画文件。TACZ 游戏侧用的是 `assets/<ns>/animations/<id>.animation.json`，两种格式要转换。
+用 [`tools/merge-bedrock-animation.mjs`](tools/merge-bedrock-animation.mjs) 合并：
+
+```
+node tools/merge-bedrock-animation.mjs <model>.bbmodel <id>.animation.json
+```
+
+转换规则（rotation 的 X 取反、常量 position 三轴取反等）是从官方 DP-12 工程
+与其源动画逐值比对得出的，并做过 70 个通道的往返验证。
+
 **技能看起来还是旧的？**
 插件加载时按字节比对自动刷新，旧版归档到 `<role>/versions/`。
 

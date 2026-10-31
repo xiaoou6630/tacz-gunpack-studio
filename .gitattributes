@@ -1,0 +1,12 @@
+# Blockbench projects are JSON documents that Blockbench rewrites itself.
+# Keep them byte-stable: a line-ending conversion would show up as a whole-file
+# diff every time the file is opened and saved.
+*.bbmodel -text
+*.animation.json -text
+
+# Everything else is ordinary text.
+*.md text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.lua text eol=lf

@@ -69,11 +69,39 @@ Blockbench 工程。用 **文件 → 打开** 直接载入。
 | model_format | bedrock |
 | resolution | 256×256 |
 | elements | 226 |
-| outliner 组 | 4 |
+| outliner 组 | 56 |
 | textures | 1 张内嵌 base64（`ksg_uv`） |
+| **animations** | **12 段**（已合并，见下） |
 
 > 226 个方块，对比官方 ak47 高模 761、m870 273 —— 属于中等密度。
 > 官方 LOD 是 25–50 cubes，这个工程另有独立 LOD 文件（未收录在此）。
+
+### 动画已经合并进工程
+
+**动画面板里直接能看到 12 段**，不需要额外导入。打开工程后按 `Ctrl`/`Cmd` + `T`
+切到 **Animate** 标签即可。
+
+> 早期的版本里 `ksg.bbmodel` 的 `animations` 是空的，动画只存在于独立的
+> `ksg.animation.json`。Blockbench 的动画面板导入**读不了**裸 Bedrock 动画文件
+> （它会提示“模型没有动画”），所以那些动画用
+> [`tools/merge-bedrock-animation.mjs`](../../tools/merge-bedrock-animation.mjs) 转换合并进来了。
+
+12 段清单：
+
+```
+animation.static_idle          loop  1.8s
+animation.static_bolt_caught   loop  0.0417s
+animation.shoot                once  0.8s
+animation.bolt                 once  0.6s
+animation.reload_intro_empty   once  1.8s
+animation.reload_intro         once  0.4s
+animation.reload_loop          once  0.5s
+animation.reload_end           once  0.35s
+animation.reload_empty         once  3.6s
+animation.reload_tactical      once  2.65s
+animation.inspect               once  3s
+animation.inspect_empty         once  3s
+```
 
 ---
 
@@ -87,10 +115,21 @@ reload_intro_empty  reload_intro  reload_loop  reload_end
 reload_empty  reload_tactical  inspect  inspect_empty
 ```
 
-骨骼是 `AKM` / `lefthand` / `righthand`。
+骨骼是 `AKM` / `lefthand` / `righthand` / `pump` / `trigger` / `camera` / `tube_selector` / `loading_gate_L`。
 
 **注意片段名必须和状态机里的 `runAnimation(...)` 对得上**，这是最常见的“动画不播”原因。
 `bolt` 这个名字是泵动/栓动专用（**不是** `bolt_action`）。
+
+### 为什么单独留这个文件
+
+它是 TACZ 枪包真正需要分发的文件（游戏读的是
+`assets/<ns>/animations/<id>.animation.json`，不是 `.bbmodel`）。
+保留它有两个作用：
+
+1. 让你看到**游戏侧原始格式**长什么样；
+2. 它和 bbmodel 里的 12 段是同一份数据的两种表示，可以拿来对照。
+
+如果你改了 bbmodel 里的动画，记得同步回这个文件（游戏不读 bbmodel）。
 
 ---
 
