@@ -237,10 +237,8 @@ Blockbench 和 DSH 都各重启一次，两者都会把旧版本留在内存。
 
 ## 贡献者
 
-| 贡献者 | 角色 |
-|---|---|
-| [@xiaoou6630](https://github.com/xiaoou6630) | 发起、需求、设计取舍、实机验收、发布 |
-| **DeepSeek**（DeepSeek Harness · `deepseek-v4.1-flash`） | 全部代码实现、TACZ 规范核对、双插件架构、文档与测试 |
+- [@xiaoou6630](https://github.com/xiaoou6630)
+- **DeepSeek**（DeepSeek Harness · `deepseek-v4.1-flash`）
 
 **关于 GitHub 侧栏只显示 1 位贡献者：** GitHub 的 Contributors 侧栏由服务端计算，只统计
 **提交邮箱绑定到真实 GitHub 账号**的提交。`deepseek` / `deepseek-ai` 都是 **Organization**

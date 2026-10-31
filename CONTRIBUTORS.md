@@ -2,18 +2,11 @@
 
 ## 人类
 
-| 贡献者 | 角色 |
-|---|---|
-| [@xiaoou6630](https://github.com/xiaoou6630) | 发起、需求、设计取舍、实机验收、发布 |
+- [@xiaoou6630](https://github.com/xiaoou6630)
 
 ## AI
 
-| 贡献者 | 角色 |
-|---|---|
-| **DeepSeek**（DeepSeek Harness · `deepseek-v4.1-flash`） | 全部代码实现、TACZ 规范核对、双插件架构、文档撰写、测试 |
-
-本项目的数据侧插件、美术侧插件改动、`docs/`、`README.md`、`ABOUT.md`、`NOTICE.md`
-与全部测试，均由 DeepSeek Harness 中的 DeepSeek 模型在本次会话中实现。
+- **DeepSeek**（DeepSeek Harness · `deepseek-v4.1-flash`）
 
 ---
 

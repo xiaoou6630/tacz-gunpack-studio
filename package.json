@@ -55,6 +55,6 @@
   "license": "(GPL-3.0-only AND MIT)",
   "author": "xiaoou6630 <3388719353@qq.com> (https://github.com/xiaoou6630)",
   "contributors": [
-    "DeepSeek (DeepSeek Harness, deepseek-v4.1-flash) — implementation, TACZ spec verification, docs, tests"
+    "DeepSeek (DeepSeek Harness, deepseek-v4.1-flash)"
   ]
 }
