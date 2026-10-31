@@ -116,16 +116,53 @@ export function settingsSetup() {
   enforceRiskyEvalOff();
 }
 
+/**
+ * Writes one setting value in a way that works across Blockbench versions.
+ *
+ * Blockbench 5.2.2 removed `Settings.set`; only `get`, `save` and `stored`
+ * remain, and values live in `Settings.stored[id].value`. Older builds
+ * (5.0–5.1) expose `Settings.set`. Throwing here aborts the whole plugin
+ * `onload`, which is exactly how this migration took the MCP server down
+ * on 5.2.2, so never call a method without checking it first.
+ *
+ * @returns true when the value was written.
+ */
+function writeSetting(id: string, value: unknown): boolean {
+  const settings = Settings as unknown as {
+    set?: (key: string, value: unknown) => void;
+    save?: () => void;
+    stored?: Record<string, { value?: unknown }>;
+  };
+  if (typeof settings.set === "function") {
+    settings.set(id, value);
+    return true;
+  }
+  if (settings.stored) {
+    const entry = settings.stored[id];
+    if (entry && typeof entry === "object") {
+      entry.value = value;
+      settings.save?.();
+      return true;
+    }
+  }
+  return false;
+}
+
 /** One-time migration: close `risky_eval` on profiles that inherited `true`. */
 function enforceRiskyEvalOff(): void {
   if (typeof Settings === "undefined") return;
   const marker = "mcp_risky_eval_migrated_off";
   if (Settings.get(marker) === true) return;
   if (Settings.get(SETTING_RISKY_EVAL_ENABLED) === true) {
-    Settings.set(SETTING_RISKY_EVAL_ENABLED, false);
-    console.info("[mcp] risky_eval was enabled by an older build; closed it. Re-enable it in Settings > General if you need arbitrary code execution.");
+    if (writeSetting(SETTING_RISKY_EVAL_ENABLED, false)) {
+      console.info("[mcp] risky_eval was enabled by an older build; closed it. Re-enable it in Settings > General if you need arbitrary code execution.");
+    }
   }
-  Settings.set(marker, true);
+  // Only record the marker once the value actually stuck, otherwise a build
+  // where the write silently failed would never retry the migration.
+  if (Settings.get(SETTING_RISKY_EVAL_ENABLED) !== true) {
+    writeSetting(marker, true);
+  }
 }
 
 /** Options for {@link settingsTeardown}. */

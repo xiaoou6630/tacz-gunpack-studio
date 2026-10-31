@@ -216,14 +216,25 @@ Blockbench 和 DSH 都各重启一次，两者都会把旧版本留在内存。
 **导入 `.animation.json` 后动画面板显示 0？**
 Blockbench 的动画面板导入读的是 **bbmodel 里已合并的 `animations[]`**，不是裸 Bedrock
 动画文件。TACZ 游戏侧用的是 `assets/<ns>/animations/<id>.animation.json`，两种格式要转换。
-用 [`tools/merge-bedrock-animation.mjs`](tools/merge-bedrock-animation.mjs) 合并：
+
+`tacz_gun action="open"` 会**自动**读取该文件并把 12 段动画导入当前工程（需要插件 1.10.1-tacz.2+）。
+如果工程是从旧版本打开的，重新 `open` 一次即可。
+
+手动合并也可以用 [`tools/merge-bedrock-animation.mjs`](tools/merge-bedrock-animation.mjs)：
 
 ```
 node tools/merge-bedrock-animation.mjs <model>.bbmodel <id>.animation.json
 ```
 
-转换规则（rotation 的 X 取反、常量 position 三轴取反等）是从官方 DP-12 工程
-与其源动画逐值比对得出的，并做过 70 个通道的往返验证。
+转换规则（rotation 的 x/y 取反、position 的 x 取反）直接来自 Blockbench 自己的
+`compileBedrockKeyframe`，并做过往返验证。
+
+**Blockbench 5.2.2 上插件不加载 / MCP 端口 3000 没起来？**
+5.2.2 移除了 `Settings.set`。旧构建的 `risky_eval` 迁移在 `onload` 里调用它会抛异常，
+整个插件加载中断，MCP 服务器随之不启动。1.10.1-tacz.2 起改用版本安全的写法
+（`Settings.set` 存在就用，否则写 `Settings.stored[id].value` + `Settings.save()`）。
+另外 5.2.2 只加载 `installed_plugins` 里登记过的本地插件，不扫描 `plugins/` 目录，
+所以升级后需要在 **文件 → 插件 → 从文件加载** 重新装一次。
 
 **技能看起来还是旧的？**
 插件加载时按字节比对自动刷新，旧版归档到 `<role>/versions/`。

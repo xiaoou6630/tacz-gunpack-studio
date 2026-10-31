@@ -1,6 +1,6 @@
 {
   "name": "blockbench-mcp",
-  "version": "1.10.1-tacz.1",
+  "version": "1.10.1-tacz.2",
   "description": "Blockbench MCP server plugin (TACZ gun-pack fork)",
   "keywords": [
     "Blockbench",

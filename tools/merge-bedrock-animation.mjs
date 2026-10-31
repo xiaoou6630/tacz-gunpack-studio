@@ -52,22 +52,38 @@ function collectGroups(model) {
   return { byUuid, byName };
 }
 
-/** Bedrock rotation -> bbmodel rotation: X is negated. */
+/**
+ * Bedrock rotation -> bbmodel rotation.
+ *
+ * Source of truth is Blockbench's own `compileBedrockKeyframe` (the export
+ * direction) in js/animations/keyframe.js:
+ *
+ *   if (this.channel == 'rotation') {
+ *     array[0] = invertMolang(array[0]);
+ *     array[1] = invertMolang(array[1]);
+ *   }
+ *
+ * The same negate-two-axes transform is its own inverse, so applying it
+ * imports a Bedrock file exactly as Blockbench would export it back.
+ */
 function rotationPoint(value) {
+  return { x: String(-value[0]), y: String(-value[1]), z: String(value[2]) };
+}
+
+/**
+ * Bedrock position -> bbmodel position.
+ *
+ * Same source: only array[0] is inverted for position.
+ *
+ *   if (this.channel == 'position') {
+ *     array[0] = invertMolang(array[0]);
+ *   }
+ */
+function positionPoint(value) {
   return { x: String(-value[0]), y: String(value[1]), z: String(value[2]) };
 }
 
-/** Bedrock keyframed position -> bbmodel position: unchanged. */
-function positionPoint(value) {
-  return { x: String(value[0]), y: String(value[1]), z: String(value[2]) };
-}
-
-/** Bedrock constant position -> bbmodel position: all axes negated. */
-function constantPositionPoint(value) {
-  return { x: String(-value[0]), y: String(-value[1]), z: String(-value[2]) };
-}
-
-/** Bedrock scale -> bbmodel scale: unchanged. */
+/** Bedrock scale -> bbmodel scale: unchanged (Blockbench does not flip scale). */
 function scalePoint(value) {
   return { x: String(value[0]), y: String(value[1]), z: String(value[2]) };
 }
@@ -108,7 +124,7 @@ function buildAnimator(boneName, bone, clipName, groupUuid) {
 
   const position = bone.position;
   if (isConstantChannel(position)) {
-    push("position", 0, constantPositionPoint(position));
+    push("position", 0, positionPoint(position));
   } else if (isKeyframedChannel(position)) {
     for (const [time, value] of Object.entries(position)) {
       if (!Array.isArray(value)) continue;
@@ -126,10 +142,13 @@ function buildAnimator(boneName, bone, clipName, groupUuid) {
     }
   }
 
-  // Blockbench writes channels in this order within a bone; keep it stable
-  // so the file diffs cleanly against a hand-authored bbmodel.
+  // Blockbench groups keyframes by channel first, then by time: a bone with
+  // rotation@0/0.9/1.8 and position@0/0.9/1.8 is stored as
+  // rotation@0, rotation@0.9, rotation@1.8, position@0, position@0.9, position@1.8
+  // — not interleaved by time. Verified against ai枪包/DP-12.bbmodel, which
+  // loads its animations in Blockbench's Animate tab.
   const CHANNEL_ORDER = { rotation: 0, position: 1, scale: 2 };
-  keyframes.sort((a, b) => a.time - b.time || CHANNEL_ORDER[a.channel] - CHANNEL_ORDER[b.channel]);
+  keyframes.sort((a, b) => CHANNEL_ORDER[a.channel] - CHANNEL_ORDER[b.channel] || a.time - b.time);
 
   const animator = {
     name: boneName,

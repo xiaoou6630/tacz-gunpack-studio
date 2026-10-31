@@ -416,6 +416,12 @@ export function registerTaczTools(): void {
         if (!exists(geometryPath, "tacz_gun")) throw new Error(`Missing geometry: ${geometryPath}`);
         const index = readJson(path.join(packDir, "data", namespace, "index", "guns", `${args.gun_id}.json`), "tacz_gun") as { type?: unknown };
         const type = (typeof index.type === "string" ? index.type : args.type ?? "rifle") as TaczGunType;
+        // TACZ keeps animations beside the model; without reading them a reopened
+        // project shows an empty Animate tab even though the pack has clips.
+        const animationPath = path.join(packDir, "assets", namespace, "animations", `${args.gun_id}.animation.json`);
+        const animationText = exists(animationPath, "tacz_gun")
+          ? new TextDecoder().decode(readBytes(animationPath, "tacz_gun"))
+          : undefined;
         const result = openGunProject({
           packDir,
           namespace,
@@ -424,6 +430,7 @@ export function registerTaczTools(): void {
           displayName: args.display_name,
           geometryText: new TextDecoder().decode(readBytes(geometryPath, "tacz_gun")),
           textureBytes: readBytes(texturePath, "tacz_gun") ?? undefined,
+          animationText,
         });
         return createJsonResult({ action: args.action, ...result, next: "Edit the project, then tacz_gun action=\"export\"." });
       }

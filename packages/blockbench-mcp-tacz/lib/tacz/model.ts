@@ -159,6 +159,78 @@ export function createGunProject(input: {
   };
 }
 
+/**
+ * Imports one Bedrock `*.animation.json` into the current project.
+ *
+ * `openGunProject` rebuilds the project from `*_geo.json` + the UV PNG, so it
+ * never carries animations — a reopened gun showed an empty Animate tab while
+ * the pack on disk had twelve clips. TACZ stores animations beside the model
+ * (`assets/<ns>/animations/<id>.animation.json`), so this reads that file and
+ * creates the clips in the live project.
+ *
+ * Axis conversion mirrors Blockbench's own `compileBedrockKeyframe` export:
+ * rotation negates x and y, position negates x, scale is untouched. Applying
+ * the same transform imports the file exactly as Blockbench would export it.
+ *
+ * @returns names of the imported clips.
+ */
+export function importBedrockAnimations(text: string): string[] {
+  const parsed = JSON.parse(text) as { animations?: Record<string, unknown> };
+  const clips = parsed.animations;
+  if (!clips || typeof clips !== "object") {
+    throw new Error('Not a Bedrock animation file: it has no "animations" object.');
+  }
+  const groups = Group.all;
+  const byName = new Map<string, Group>();
+  for (const group of groups) {
+    if (!byName.has(group.name)) byName.set(group.name, group);
+  }
+
+  const imported: string[] = [];
+  for (const [clipName, raw] of Object.entries(clips)) {
+    const clip = raw as {
+      loop?: unknown;
+      animation_length?: unknown;
+      bones?: Record<string, Record<string, unknown>>;
+    };
+    const animation = new Animation({
+      name: `animation.${clipName}`,
+      loop: clip.loop === true ? "loop" : "once",
+      length: typeof clip.animation_length === "number" ? clip.animation_length : 0,
+    });
+    for (const [boneName, channels] of Object.entries(clip.bones ?? {})) {
+      const group = byName.get(boneName);
+      if (!group) continue; // a bone the model does not have; nothing to animate
+      const animator = animation.getBoneAnimator(group);
+      if (!animator) continue;
+      for (const channel of ["rotation", "position", "scale"] as const) {
+        const value = channels[channel];
+        if (value === undefined) continue;
+        const flip = (point: number[]): [number, number, number] =>
+          channel === "rotation"
+            ? [-point[0], -point[1], point[2]]
+            : channel === "position"
+              ? [-point[0], point[1], point[2]]
+              : [point[0], point[1], point[2]];
+        const points: Array<[number, [number, number, number]]> =
+          Array.isArray(value)
+            ? [[0, flip(value as number[])]]
+            : Object.entries(value as Record<string, number[]>).map(([time, point]) => [Number(time), flip(point)]);
+        for (const [time, point] of points) {
+          const keyframe = animator.createKeyframe(channel, time);
+          if (!keyframe) continue;
+          keyframe.set(0, point[0]);
+          keyframe.set(1, point[1]);
+          keyframe.set(2, point[2]);
+        }
+      }
+    }
+    animation.addToTimeline();
+    imported.push(animation.name);
+  }
+  return imported;
+}
+
 /** Opens an existing `*_geo.json` plus its PNG texture in a new Bedrock Entity project. */
 export function openGunProject(input: {
   packDir: string;
@@ -168,7 +240,9 @@ export function openGunProject(input: {
   displayName?: string;
   geometryText: string;
   textureBytes?: Uint8Array;
-}): { project: string; groups: number; cubes: number; texture_size: [number, number] } {
+  /** Raw `assets/<ns>/animations/<id>.animation.json`, when the pack ships one. */
+  animationText?: string;
+}): { project: string; groups: number; cubes: number; texture_size: [number, number]; animations: string[] } {
   const formats = Formats as unknown as Record<string, ModelFormat | undefined>;
   const format = formats[TACZ_FORMAT_ID];
   if (!format) throw new Error(`Blockbench has no "${TACZ_FORMAT_ID}" format.`);
@@ -189,6 +263,7 @@ export function openGunProject(input: {
   }
   importGeoModel(geometry);
   for (const cube of Cube.all) cube.applyTexture(texture, true);
+  const animations = input.animationText ? importBedrockAnimations(input.animationText) : [];
   Canvas.updateAll();
   setGunProjectMeta({
     pack_dir: input.packDir,
@@ -199,15 +274,14 @@ export function openGunProject(input: {
     texture_size: size,
     profile: {},
   });
-  return { project: Project.name, groups: Group.all.length, cubes: Cube.all.length, texture_size: size };
+  return { project: Project.name, groups: Group.all.length, cubes: Cube.all.length, texture_size: size, animations };
 }
 
 /** Active project texture, falling back to the first project texture. */
 export function currentTexture(): Texture {
   const selected = Texture.selected;
   if (selected) return selected;
-  const first = Texture.all[0];
-  if (!first) throw new Error("The project has no texture. Run tacz_texture_init first.");
+  const first = Texture.all[0];  if (!first) throw new Error("The project has no texture. Run tacz_texture_init first.");
   return first;
 }
 
