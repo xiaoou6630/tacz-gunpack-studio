@@ -144,6 +144,7 @@ tacz-gunpack-studio/
 ├─ packages/
 │  ├─ blockbench-mcp-tacz/       美术侧（GPL-3.0）
 │  └─ dsh-tacz-gunpack/          数据侧（MIT）
+├─ examples/ksg/                  真实案例：KSG 工程文件 + 动画 + 状态机 + display
 ├─ docs/                          枪包格式规范（已核对官方 wiki）
 ├─ LICENSES/                      两侧许可全文
 ├─ NOTICE.md                      双许可说明
@@ -151,6 +152,9 @@ tacz-gunpack-studio/
 ├─ CONTRIBUTORS.md                贡献者与 AI 署名说明
 └─ README.md
 ```
+
+> `examples/ksg/` 是**真做出来并通过校验**的枪，文档里的 `<gun>` 示例都以它为准。
+> 含 Blockbench 工程（226 cubes）、12 段动画、状态机、display 和调研简报。
 
 ---
 

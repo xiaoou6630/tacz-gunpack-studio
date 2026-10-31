@@ -1,0 +1,652 @@
+{
+  "schema_version": "1.0",
+  "gun_id": "ksg",
+  "display_name": "Kel-Tec KSG",
+  "type": "shotgun",
+  "ammo_tacz": "tacz:12g",
+  "summary": "Kel-Tec KSG 是 12 号口径 bullpup 泵动霰弹枪，全长仅 26.1 英寸，却把 18.5 英寸枪管和左右两根管式弹仓塞进枪托内。它的识别特征是：双管并列、枪托/握把后方的三位置弹仓选择杆、握把后方的单一向下装填/抛壳口、每根管 7 发 2.75 英寸弹（3 英寸弹为 6 发）再加膛内 1 发。模型应做成 37.5 units 长、10 units 高、5 units 宽的紧凑比例；动画核心是泵动循环、逐发装填、选择杆左右拨动和向下抛壳。",
+  "ammo_verification": {
+    "tacz_ammo_id": "tacz:12g",
+    "status": "verified",
+    "evidence": [
+      "TaCZ 1.1.8 默认枪包 data/tacz/index/ammo/12g.json 存在 tacz:12g 弹药定义。",
+      "TaCZ 1.1.8 默认 M870 data/tacz/data/guns/m870_data.json 使用 \"ammo\": \"tacz:12g\"，可作为 12 号泵动霰弹枪的同类基线。"
+    ],
+    "note": "TaCZ 只有一个 12g 弹药 id，没有 2.75 英寸 / 3 英寸两个独立变体；因此 KSG 的 14+1 与 12+1 两种容量在游戏内只能选一种做默认值。"
+  },
+  "real_specs": {
+    "manufacturer": "Kel-Tec CNC Industries",
+    "model": "KSG",
+    "country": "USA",
+    "type": "bullpup pump-action shotgun",
+    "operating_system": "manual pump action, bullpup layout, downward ejection",
+    "gauge": "12 gauge",
+    "chamber_in": 3.0,
+    "barrel_in": 18.5,
+    "barrel_type": "cylinder bore",
+    "oal_in": 26.1,
+    "height_in": 7.0,
+    "width_in": 3.0,
+    "weight_lb": 6.9,
+    "weight_kg": 3.1,
+    "capacity_2_75_in": "14+1 (7+7 in the two tubes + 1 chambered; 15 rounds total)",
+    "capacity_3_in": "12+1 (6+6 in the two tubes + 1 chambered; 13 rounds total)",
+    "magazine_layout": "two side-by-side tubular magazines under the barrel, left and right",
+    "feed_selection": "three-position manual selector (left / center / right); center blocks both tubes. Located on the underside at the rear of the magazine tubes, behind the pistol grip.",
+    "ejection": "downward, through a single combined loading/ejection port under the receiver, rearward of the pistol grip",
+    "safety": "cross-bolt push button above the pistol grip; white S = safe, red F = fire",
+    "rail": "continuous top Picatinny rail; M-LOK slots in the polymer forend/pump",
+    "sights": "flip-up front and rear sights on the top rail (standard KSG; Tactical/Defender variants differ)",
+    "trigger_pull_lb": 5.0,
+    "source_urls": [
+      "https://www.keltecweapons.com/firearm/shotguns/ksg/",
+      "https://en.wikipedia.org/wiki/KelTec_KSG",
+      "https://gunsmagazine.com/discover/keltec-ksg-bullpup/",
+      "https://www.gunsandammo.com/editorial/review-kel-tec-ksg-25/247558",
+      "https://www.gtdist.com/products/guns-firearms/shotguns/kel-tec-12ga-shotgun-le-only.html",
+      "https://storage.courtlistener.com/recap/gov.uscourts.ca9.345123/gov.uscourts.ca9.345123.15.18.pdf",
+      "https://www.thektog.org/threads/loading-unloading-the-magazines.253975/",
+      "https://www.ar15.com/forums/armory/-ARCHIVED-THREAD-New-Kel-Tec-KSG-bullpup-shotgun-/1-332695/?page=4#i2994210"
+    ],
+    "source_notes": [
+      "26.1 in / 18.5 in / 6.9 lb / 3 in chamber 与 Kel-Tec 官方页面及 Wikipedia 一致；早期 KSG 曾只标 2.75 英寸弹膛，当前生产型为 3 英寸，本 brief 采用当前型。",
+      "Kel-Tec 营销页写 14 rounds，实际计数口径是 14 发在两根管内 + 1 发在膛内（14+1）；使用 3 英寸弹时为 12+1。",
+      "官网/宣传图有时把总长四舍五入成 26 in；以 26.1 in 为准。",
+      "height 7 in 来自 Wikipedia 信息框，可能不含照门/准星最高点和握把最低点；模型按 10 units 做整体高度。",
+      "width 3 in 是在泵动护木处测得的论坛数据，不是官方标称值，按 estimate 处理。"
+    ]
+  },
+  "game_scale": {
+    "unit_per_block": 16,
+    "reference_gun": "DP-12",
+    "reference_real_oal_in": 29.5,
+    "reference_model_oal_units": 42,
+    "units_per_inch": 1.4237,
+    "ksg_real_oal_in": 26.1,
+    "ksg_raw_oal_units": 37.16,
+    "recommended_total_length_units": 37.5,
+    "recommended_height_units": 10.0,
+    "recommended_width_units": 5.0,
+    "derivation": [
+      "42 units / 29.5 in = 1.4237 units per inch（DP-12 基准换算）。",
+      "26.1 in × 1.4237 = 37.16 units；取 37.5 units，仅比严格换算大约 0.9%，便于建模取整。",
+      "7.0 in × 1.4237 = 9.97 units；取 10.0 units（含导轨与握把的整体高度）。",
+      "3.0 in × 1.4237 = 4.27 units；模型取 5.0 units，比真实宽度约宽 17%，用于在 16 units/block 下让双管、泵动护木和侧面导轨清楚可读并避免共面闪烁。"
+    ],
+    "height_note": "10 units 是从导轨顶到握把底的整体高度；若只量机匣主体（不含握把下垂），约 8.0-8.5 units。",
+    "width_note": "真实泵动护木宽约 3 in，严格换算是 4.27 units；5 units 是有意的可读性放大。若后续与 DP-12 并排显得过胖，可回退到 4.6-4.8 units。",
+    "scale_risk": "KSG 是 bullpup，视觉重心很靠后；如果按普通霰弹枪把机匣放在中间，会显得枪管过短。请以本 brief 的 proportions 和参考侧视图为准。"
+  },
+  "proportions": {
+    "axis": "X 轴为枪身长度方向；TaCZ 约定枪口朝 -Z、枪托朝 +Z、+Y 向上、+X 为右侧。建模时可按此约定旋转。",
+    "definition": "按外部轮廓分段的长度，不是 18.5 in 枪管的真实全长；KSG 的枪管后段约 7.6 in 被机匣/枪托包住。",
+    "total_length_units": 37.5,
+    "stock_units": 12.0,
+    "receiver_units": 10.0,
+    "barrel_units": 15.5,
+    "sum_check": 37.5,
+    "real_equivalent_in_at_1_4237_units_per_in": {
+      "stock": 8.43,
+      "receiver": 7.02,
+      "barrel_visible": 10.89
+    },
+    "barrel_real_in": 18.5,
+    "notes": [
+      "stock_units 12.0 包含橡胶托底板、枪托主体和贴腮区，是侧视图最靠后的一段。",
+      "receiver_units 10.0 包含握把、扳机护圈、保险、选择杆、组合装填/抛壳口和后段枪管包覆。",
+      "barrel_units 15.5 是机匣前方可见的枪管、泵动护木和枪口段；泵动护木的行程包含在这一段内，不要把护木长度误当成枪管长度。",
+      "18.5 in 枪管减去约 7.6 in 被机匣/枪托包覆的后段，剩下约 10.9 in 在机匣前方可见，与 15.5 units 基本对应。"
+    ]
+  },
+  "rig_axis_convention": {
+    "forward": "-Z（枪口方向）",
+    "up": "+Y",
+    "right": "+X",
+    "origin_hint": "建议把模型原点放在扳机/握把附近，root 位于枪身中心线；这样第三人称持枪和枪口定位更稳定。",
+    "muzzle_locator": "muzzle 放在枪管出口中心，muzzle_flash 沿 -Z 方向。",
+    "shell_locator": "shell 放在组合口内侧、枪身下方，抛壳速度以 -Y 为主。"
+  },
+  "bone_contract": [
+    "barrel",
+    "mag_tubes",
+    "pump",
+    "receiver",
+    "top_rail",
+    "stock",
+    "pistol_grip",
+    "trigger",
+    "trigger_guard",
+    "safety",
+    "tube_selector",
+    "ejection_port",
+    "loading_port_L",
+    "loading_port_R",
+    "buttpad",
+    "sling_loop",
+    "muzzle",
+    "front_sight",
+    "rear_sight",
+    "shell"
+  ],
+  "rig_hierarchy_hint": {
+    "note": "层级是建议值，modeler 可按 Blockbench 轴向微调；关键是 bone 名必须命中 bone_contract。",
+    "root": ["receiver"],
+    "receiver": [
+      "stock",
+      "pistol_grip",
+      "top_rail",
+      "barrel",
+      "pump",
+      "safety",
+      "tube_selector",
+      "ejection_port",
+      "loading_port_L",
+      "loading_port_R",
+      "shell"
+    ],
+    "stock": ["buttpad", "sling_loop"],
+    "pistol_grip": ["trigger_guard"],
+    "trigger_guard": ["trigger"],
+    "barrel": ["mag_tubes", "muzzle"],
+    "muzzle": ["front_sight"],
+    "top_rail": ["rear_sight"]
+  },
+  "parts": [
+    {
+      "name": "Receiver / action housing",
+      "bone_hint": "receiver",
+      "description": "黑色玻璃纤维增强尼龙机匣，bullpup 布局：弹膛、枪机、击发机构和组合装填/抛壳口都在握把后方。侧面有 KEL-TEC CNC INC. / COCOA FL USA 滚印，表面细颗粒纹理。"
+    },
+    {
+      "name": "Barrel",
+      "bone_hint": "barrel",
+      "description": "18.5 英寸 cylinder bore 枪管，固定在机匣上；从机匣前方伸出，泵动护木套在枪管和两根弹仓管外面。枪管本身不参与泵动动画。"
+    },
+    {
+      "name": "Dual magazine tubes",
+      "bone_hint": "mag_tubes",
+      "description": "枪管下方左右并列的两根管式弹仓，左管/右管各 7 发 2.75 英寸弹或 6 发 3 英寸弹；枪口端可见两个圆形管帽。两根管是固定件，不随泵动前后移动。"
+    },
+    {
+      "name": "Pump / forend",
+      "bone_hint": "pump",
+      "description": "包裹枪管和双管的滑动护木，侧面有 M-LOK 长槽和防滑纹理；泵动时向后约 3 units 解锁、抽壳、抛壳，再向前推弹上膛。护木是主动画件。"
+    },
+    {
+      "name": "Top Picatinny rail",
+      "bone_hint": "top_rail",
+      "description": "从机匣顶部延伸到枪管前段的连续皮卡汀尼导轨，约 20+ 个横向槽；前后各装 flip-up 机械瞄具。导轨应高出机匣顶面约 0.6-0.8 units。"
+    },
+    {
+      "name": "Stock",
+      "bone_hint": "stock",
+      "description": "固定式 bullpup 枪托/贴腮体，黑色聚合物；侧面有三角形减重/造型凹槽，底部有背带环安装位。枪托内部包住枪管后段和枪机。"
+    },
+    {
+      "name": "Pistol grip",
+      "bone_hint": "pistol_grip",
+      "description": "垂直手枪握把，黑色聚合物，侧面有方格防滑纹理和两颗固定螺钉；握把位于扳机护圈后方，是 bullpup 布局的视觉中心。"
+    },
+    {
+      "name": "Trigger",
+      "bone_hint": "trigger",
+      "description": "扳机片，位于护圈内；建议单独 bone 以便开火动画（后拉约 0.4 units / 8 度）。"
+    },
+    {
+      "name": "Trigger guard",
+      "bone_hint": "trigger_guard",
+      "description": "大开口聚合物扳机护圈，前缘与握把相连；护圈下方留出戴手套的空间。"
+    },
+    {
+      "name": "Cross-bolt safety",
+      "bone_hint": "safety",
+      "description": "握把上方的横推式保险按钮，左右可推；白色 S 为待击发保险，红色 F 为可击发。按键表面有细密防滑纹。"
+    },
+    {
+      "name": "Magazine tube selector",
+      "bone_hint": "tube_selector",
+      "description": "三位置弹仓选择杆，位于枪身下方、两根弹仓管尾端、握把后方；左/中/右三个位置，中间位同时阻断左右两管。选择杆是 KSG 最核心的识别件，建议做成可独立旋转/拨动的 bone。"
+    },
+    {
+      "name": "Combined ejection port",
+      "bone_hint": "ejection_port",
+      "description": "握把后方的单一向下开口，同时承担装填和抛壳；空弹壳向下掉出，所以左右手射击都完全适用。不要在侧面另开抛壳口。"
+    },
+    {
+      "name": "Left tube loading mouth",
+      "bone_hint": "loading_port_L",
+      "description": "左弹仓管在组合口内部的装填入口/定位点，不是机匣外部的第二个洞。真实枪上弹药通过同一个组合口、由选择杆导向左管；此 bone 用于逐发装填动画和 shell 路径。"
+    },
+    {
+      "name": "Right tube loading mouth",
+      "bone_hint": "loading_port_R",
+      "description": "右弹仓管在组合口内部的装填入口/定位点；与 loading_port_L 对称布置在枪身中线两侧，间距约 1.6-1.8 units（双管中心距）。"
+    },
+    {
+      "name": "Rubber buttpad",
+      "bone_hint": "buttpad",
+      "description": "枪托尾端的黑色橡胶托底板，表面有方格/菱形防滑纹，厚度约 0.8-1.0 units；轮廓略大于枪托本体。"
+    },
+    {
+      "name": "Sling loop / slot",
+      "bone_hint": "sling_loop",
+      "description": "枪托后下方的背带环/背带槽；KSG 原厂为聚合物开槽式，可穿背带。建模为一个小的凹槽或环，不要做大。"
+    },
+    {
+      "name": "Muzzle",
+      "bone_hint": "muzzle",
+      "description": "枪管出口中心定位点；枪口无制退器，只有圆管口。muzzle_flash 与弹道起点都应挂在此 bone。"
+    },
+    {
+      "name": "Front sight",
+      "bone_hint": "front_sight",
+      "description": "导轨前端的 flip-up 准星，折叠时贴导轨，立起时高于导轨约 1.2 units；标准 KSG 为准星柱式。"
+    },
+    {
+      "name": "Rear sight",
+      "bone_hint": "rear_sight",
+      "description": "导轨后端的 flip-up 照门，折叠时贴导轨；与 front_sight 同一高度基准。Tactical/Defender 可能配 Magpul 或不同瞄具，本 brief 按标准 KSG 做。"
+    },
+    {
+      "name": "Ejected shell",
+      "bone_hint": "shell",
+      "description": "12 号空弹壳的抛壳定位点/可见弹壳模型；KSG 向下抛壳，shell 应从组合口内侧向 -Y 方向掉出，带轻微 -Z 和 +X 随机速度。"
+    }
+  ],
+  "palette": [
+    {
+      "name": "polymer_black",
+      "hex": "#17181A",
+      "usage": "机匣、枪托、握把、泵动护木的主色；大面积哑光黑。"
+    },
+    {
+      "name": "polymer_black_light",
+      "hex": "#232529",
+      "usage": "受光面/倒角高光，避免全黑模型在游戏里糊成一团。"
+    },
+    {
+      "name": "polymer_edge",
+      "hex": "#2E3136",
+      "usage": "护木 M-LOK 槽内壁、握把防滑纹凸起、机匣分模线。"
+    },
+    {
+      "name": "marking_red",
+      "hex": "#C62828",
+      "usage": "保险 F（fire）红色标记；只在保险按钮局部使用。"
+    },
+    {
+      "name": "steel_dark",
+      "hex": "#3B3F44",
+      "usage": "枪管、双弹仓管、枪机等深色钢件。"
+    },
+    {
+      "name": "steel_mid",
+      "hex": "#5A6066",
+      "usage": "枪管圆柱面高光、管帽边缘、导轨齿顶。"
+    },
+    {
+      "name": "steel_highlight",
+      "hex": "#8A9096",
+      "usage": "金属棱边最亮的一档高光，少量使用。"
+    },
+    {
+      "name": "rail_steel",
+      "hex": "#4A4E53",
+      "usage": "皮卡汀尼导轨、前后瞄具金属件。"
+    },
+    {
+      "name": "rubber_buttpad",
+      "hex": "#101112",
+      "usage": "橡胶托底板，比聚合物更黑、更哑光。"
+    },
+    {
+      "name": "shell_hull",
+      "hex": "#D9481F",
+      "usage": "橙红色 12 号弹壳塑料壳身；抛壳动画和弹壳模型用。"
+    },
+    {
+      "name": "shell_brass",
+      "hex": "#B08D57",
+      "usage": "弹壳底火/黄铜底座；只在弹壳模型和装填动画中少量出现。"
+    },
+    {
+      "name": "marking_white",
+      "hex": "#E6E6E6",
+      "usage": "白色 S（safe）保险标记、KEL-TEC / COCOA FL USA 滚印；少量使用。"
+    }
+  ],
+  "mechanics": {
+    "dual_tube_selector": {
+      "what_it_is": "两根平行管式弹仓共用一个供弹/装填口，三位置选择杆决定当前哪根管供弹、哪根管接收装填。",
+      "positions": {
+        "left": "选择左管供弹/装填；从射手视角把杆拨向左侧。",
+        "center": "中立位，同时阻断左右两管；不能供弹，也不能把弹压进管里，但可以手动往膛内直装或退膛。",
+        "right": "选择右管供弹/装填；从射手视角把杆拨向右侧。"
+      },
+      "location": "枪身下方、两根弹仓管尾端、握把/扳机护圈后方；不是机匣侧面。",
+      "behavior": "选择杆不会自动切换。一根管打空后，必须手动把杆拨到另一根管；这正是 KSG 可以在两管内装不同弹种（例如独头弹 + 鹿弹）的战术逻辑。",
+      "center_is_not_safe": "中间位只是阻断供弹/装填，不等于保险；保险是握把上方的独立横推按钮。",
+      "sources": [
+        "https://www.keltecweapons.com/firearm/shotguns/ksg/",
+        "https://gunsmagazine.com/discover/keltec-ksg-bullpup/",
+        "https://www.gunsandammo.com/editorial/review-kel-tec-ksg-25/247558",
+        "https://www.thektog.org/threads/loading-unloading-the-magazines.253975/"
+      ]
+    },
+    "capacity": {
+      "2_75_in": "每管 7 发，两管 14 发，再加膛内 1 发，共 15 发；常写 14+1。",
+      "3_in": "每管 6 发，两管 12 发，再加膛内 1 发，共 13 发；常写 12+1。",
+      "why_two_numbers": "管长固定，弹越长装得越少。14+1 不是 14 发在两根管里再额外 1 发，而是 14 发在管里 + 1 发在膛里。",
+      "tacz_decision": "TaCZ 只有一种 tacz:12g，无法按弹长动态改变容量；建议游戏内默认按 2.75 英寸的 14+1 做，即 ammo_amount=14，装填脚本再把 1 发压进膛内。"
+    },
+    "pump_cycle": {
+      "sequence": "向后拉护木 → 枪机解锁/后退 → 抽壳 → 空弹壳从下方组合口掉出 → 击锤待击 → 向前推护木 → 从当前选中的弹仓管推下一发入膛 → 闭锁。",
+      "must_be_full_stroke": "KSG 对短行程比较敏感；泵动不到位可能导致供弹故障。动画上应明确做出后到位、前到位的两个极限位置，不要做成轻轻抖动。",
+      "pump_travel_estimate_units": 3.0,
+      "animation_hint": "bolt 动画里 pump 沿 +Z 后移约 3.0 units，再回 0；射手的左手应跟着护木走。"
+    },
+    "downward_ejection": {
+      "what_it_is": "空弹壳从握把后方的单一组合口向正下方掉出；没有侧面抛壳口，所以左手/右手射击都不会打脸。",
+      "port_sharing": "同一个开口同时用于装填和抛壳；装填时弹从下方压入，抛壳时空壳从下方掉出。",
+      "animation_hint": "shell 速度以 -Y 为主，建议 initial_velocity=[0.2,-2.0,0.2]，acceleration=[0,-10,0]，living_time≈0.8 s；不要给 +X 大速度，否则会像侧抛。"
+    },
+    "loading_sequence": {
+      "step_1": "确认枪口安全方向，保险置于白 S（待击发保险），护木推到最前。",
+      "step_2": "把选择杆拨到左管位置，从握把后方的组合口逐发压入 7 发 2.75 英寸弹（拇指推弹入管）。",
+      "step_3": "把选择杆拨到右管位置，再逐发压入 7 发；两管都装满。",
+      "step_4": "把选择杆拨到准备使用的供弹管（左或右），推拉护木一次，从该管推 1 发进膛，形成 14+1。",
+      "step_5": "如果需要，可再往当前供弹管补 1 发，回到满弹状态；KSG 的装填是逐发、两段式的，不是插入弹匣。",
+      "center_use": "把选择杆放中间可阻断两根管，便于退膛、清枪或直接往膛里装单发。",
+      "sources": [
+        "https://storage.courtlistener.com/recap/gov.uscourts.ca9.345123/gov.uscourts.ca9.345123.15.18.pdf",
+        "https://www.thektog.org/threads/loading-unloading-the-magazines.253975/",
+        "https://gunsmagazine.com/discover/keltec-ksg-bullpup/"
+      ]
+    },
+    "empty_and_dry_fire": {
+      "empty_tubes": "两管都空、膛内也空时，泵动仍可循环，但不会供弹；扣扳机只会释放击锤/空击，不会有射击效果。",
+      "one_tube_empty": "当前选择的管打空后不会自动切到另一根；必须手动拨选择杆。空仓挂机/无弹提示在真实 KSG 上并不明显，主要靠射手自己数弹。",
+      "tacz_hint": "TaCZ 用一个 ammo pool 即可自然表达空仓：ammo=0 时 shoot 不消耗、不发射；泵动动画仍可播放。可用 inspect_empty 做空仓检查动画。"
+    },
+    "tacz_expression": {
+      "representable_with_stock_tacz": [
+        "泵动循环：bolt: manual_action + tacz:manual_action_state_machine 的 bolt 状态。",
+        "逐发装填：reload 状态机 + reload_intro / reload_loop / reload_end 动画，每发 0.4-0.5 s。",
+        "向下抛壳：display JSON 的 shell 速度/加速度设成 -Y 方向，配合 state_machine_param.bolt_shell_ejecting_time。",
+        "空仓/干火：ammo=0 时不发射；inspect_empty 动画。",
+        "选择杆、保险、扳机的视觉动画：作为独立 bone 在 idle/bolt/reload 动画里做关键帧。",
+        "单发、泵动、开火后坐、换弹、检视、收起等基础状态。"
+      ],
+      "custom_lua_state_machine_can_do": [
+        "在 reload_loop 中根据已装发数切换 tube_selector 的视觉位置（例如第 1-7 发指左、第 8-14 发指右），做出两段式装填的观感。",
+        "把 bolt 动画拆成后拉/前推两段，在 shell 抛出时刻触发 popShellFrom。",
+        "在 inspect/inspect_empty 中根据 ammo 数播放不同检查动画。",
+        "通过 script_param 暴露 bolt_time、bolt_feed_time、intro_shell_ejecting_time 等时序参数。"
+      ],
+      "visual_only": [
+        "选择杆左右拨动本身：可以作为动画/玩家手动摆件，但不改变实际弹药池。",
+        "两段式装填的“左管 7 发 → 拨杆 → 右管 7 发”顺序：可以演出来，但不能真正强制分开计数。",
+        "向下抛壳的弹壳物理：TaCZ 的 shell 是表现层，不影响弹药逻辑。"
+      ],
+      "not_natively_possible_in_pack_only": [
+        "左右管各自独立的 7+7 弹药计数、独立弹种、独立空仓状态。",
+        "由选择杆决定下一发从哪根管供弹、装填时进入哪根管。",
+        "同一把枪在 2.75 英寸（14+1）和 3 英寸（12+1）之间切换容量。",
+        "玩家可操作的“拨选择杆切管”键位；stock TaCZ 枪械数据没有这个输入通道。"
+      ],
+      "recommended_gameplay_model": "按单弹药池 14+1 实现：ammo_amount=14，装填脚本把 1 发压进膛；tube_selector 只做视觉状态（idle 居中或偏当前管，reload 时按发数左右切换）。如果一定要真实双管逻辑，需要 engine/API 级改动，超出本枪包 data-only 范围。"
+    }
+  },
+  "animation": {
+    "needed": true,
+    "state_machine": true,
+    "base_state_machine": "tacz:manual_action_state_machine",
+    "custom_state_machine": "ksg_state_machine",
+    "clips": [
+      {
+        "name": "static_idle",
+        "length_s": 0.0417,
+        "loop": false,
+        "notes": "静态持枪；选择杆居中或指向默认供弹管。"
+      },
+      {
+        "name": "shoot",
+        "length_s": 0.8,
+        "loop": false,
+        "notes": "后坐 + 枪口上跳；泵动循环由 bolt 动画接管。"
+      },
+      {
+        "name": "bolt",
+        "length_s": 0.6,
+        "loop": false,
+        "notes": "泵动：pump 后移 3.0 units → 抛壳 → 前推上膛；shell 在 0.17 s 左右从 ejection_port 向下抛出。"
+      },
+      {
+        "name": "reload_intro_empty",
+        "length_s": 1.2,
+        "loop": false,
+        "notes": "空仓起始：护木前推、选择杆归位、左手移到组合口下方。"
+      },
+      {
+        "name": "reload_loop",
+        "length_s": 0.45,
+        "loop": false,
+        "notes": "单发装填循环；第 7 发后选择杆从 L 拨到 R（视觉），第 14 发后回中或回到供弹管。"
+      },
+      {
+        "name": "reload_end",
+        "length_s": 0.4,
+        "loop": false,
+        "notes": "装填收尾；可补 1 发进膛或直接推拉护木上膛。"
+      },
+      {
+        "name": "inspect",
+        "length_s": 3.0,
+        "loop": false,
+        "notes": "有弹检视；可展示选择杆和组合口。"
+      },
+      {
+        "name": "inspect_01",
+        "length_s": 3.0,
+        "loop": false,
+        "notes": "膛内有弹、弹仓空的检视变体。"
+      },
+      {
+        "name": "inspect_empty",
+        "length_s": 3.0,
+        "loop": false,
+        "notes": "全空检视；选择杆居中，展示两管都空。"
+      }
+    ],
+    "pump_travel_units": 3.0,
+    "selector_throw_degrees": 18,
+    "trigger_pull_degrees": 8,
+    "shell_ejection": {
+      "port_bone": "ejection_port",
+      "shell_bone": "shell",
+      "initial_velocity": [0.2, -2.0, 0.2],
+      "random_velocity": [0.2, 0.3, 0.2],
+      "acceleration": [0.0, -10.0, 0.0],
+      "angular_velocity": [180, -540, 90],
+      "living_time_s": 0.8
+    },
+    "notes": [
+      "KSG 的泵动是核心动画；不要用步枪的 bolt 动作代替，pump bone 必须沿枪管方向前后滑动。",
+      "选择杆是识别件，但只能做视觉；不要给它写会改变弹药的逻辑。",
+      "向下抛壳意味着弹壳不应从机匣侧面飞出；shell 速度以 -Y 为主。",
+      "装填动画应体现逐发、两段式：左手从下方组合口压弹，7 发后拨选择杆，再装另一管。"
+    ]
+  },
+  "ta_tacz_data_hints": {
+    "note": "以下只是给 data-smith 的起点值，最终以 TaCZ 1.1.8 数据格式和实际测试为准。",
+    "type": "shotgun",
+    "ammo": "tacz:12g",
+    "ammo_amount": 14,
+    "bolt": "manual_action",
+    "rpm": 120,
+    "fire_mode": ["semi"],
+    "reload_type": "magazine",
+    "script": "ksg_gun_logic（可参照 tacz:m870_gun_logic 的 tick_bolt/tick_reload 结构）",
+    "state_machine": "tacz:ksg_state_machine",
+    "state_machine_param": {
+      "bolt_shell_ejecting_time": 0.17,
+      "intro_shell_ejecting_time": 0.4
+    },
+    "display_shell": {
+      "initial_velocity": [0.2, -2.0, 0.2],
+      "random_velocity": [0.2, 0.3, 0.2],
+      "acceleration": [0.0, -10.0, 0.0],
+      "angular_velocity": [180, -540, 90],
+      "living_time": 0.8
+    },
+    "weight": 3.1,
+    "muzzle_flash_scale": 1.1,
+    "capacity_note": "ammo_amount=14 是建议的“两管合计”弹仓容量。TaCZ 1.1.8 的 ammo_amount / getMaxAmmoCount 是否把膛内 1 发算在内，必须用默认 M870 的 ammo_amount=5 与 5+1/6+1 实际行为实测确认：若 ammo_amount 已含膛内弹，应改为 15 或调整装填脚本，绝不能出现 14+脚本再加 1 变成 16 发。"
+  },
+  "uncertain": [
+    {
+      "item": "width_in",
+      "value": 3.0,
+      "status": "estimate",
+      "reason": "该值来自 AR15.com 论坛对泵动护木处宽度的讨论，不是 Kel-Tec 官方标称；官方只给全长/枪管/重量。模型取 5 units 是有意放大。"
+    },
+    {
+      "item": "height_in",
+      "value": 7.0,
+      "status": "official_but_ambiguous",
+      "reason": "Wikipedia 信息框给 7 in，但未说明是否含瞄具最高点或握把最低点；模型 10 units 按导轨顶到握把底做整体高度。"
+    },
+    {
+      "item": "tube_selector_installed_geometry",
+      "status": "approximate",
+      "reason": "没有找到清晰的“选择杆安装在枪上”的近景照片；形状参考 Kel-Tec 官方 KSG-333 selector 零件线图，位置和行为来自说明书摘录与枪评。建模时以功能位置和拨动方向为准，外观可简化。"
+    },
+    {
+      "item": "pump_travel_units",
+      "value": 3.0,
+      "status": "estimate",
+      "reason": "真实泵动行程没有官方数据；按 12 号霰弹枪典型行程和 2.75 英寸弹长约 3 units 估算。"
+    },
+    {
+      "item": "port_dimensions",
+      "status": "estimate",
+      "reason": "组合装填/抛壳口的精确开孔尺寸没有公开数据；按参考照片比例估计宽约 3.2-3.8 units、深约 1.2-1.6 units。"
+    },
+    {
+      "item": "early_vs_current_chamber",
+      "status": "variant",
+      "reason": "早期 KSG 曾只标 2.75 英寸弹膛，当前生产型为 3 英寸；本 brief 按当前 3 英寸做，但容量默认按 2.75 英寸的 14+1。"
+    },
+    {
+      "item": "sight_variants",
+      "status": "variant",
+      "reason": "标准 KSG 为 flip-up 机械瞄具，KSG Tactical/Defender 可能配 Magpul 或其他瞄具；本 brief 按标准 KSG。"
+    },
+    {
+      "item": "loading_port_L_R_are_virtual",
+      "status": "design_decision",
+      "reason": "真实 KSG 只有一个外部组合口，没有左右两个外部装填口；loading_port_L/R 是内部管口定位点，用于动画和状态机，不是要求 modeler 在机匣上开两个洞。"
+    },
+    {
+      "item": "tacz_ammo_amount_semantics",
+      "status": "needs_runtime_verification",
+      "reason": "TaCZ 1.1.8 的 ammo_amount 与 getMaxAmmoCount 是否包含膛内 1 发，需用默认 M870 基线实测；brief 建议 14 作为两管合计，但 data-smith 必须按实际 API 调整，避免做出 16 发。"
+    }
+  ],
+  "risks": [
+    {
+      "level": "major",
+      "risk": "TaCZ 单弹药池无法表达左右管独立计数和选择杆切换供弹；如果 data-smith 按真实 7+7+1 做，会出现弹药数对不上、装填动画和实际弹数脱节。",
+      "mitigation": "游戏内按 14+1 单池实现，选择杆只做视觉；在 data 里写明这是近似。"
+    },
+    {
+      "level": "major",
+      "risk": "把 KSG 做成普通泵动霰弹枪布局（机匣在中、枪托在后），会失去 bullpup 识别度，长度比例也会错。",
+      "mitigation": "严格按 12/10/15.5 units 的 stock/receiver/barrel 分段和侧视图轮廓。"
+    },
+    {
+      "level": "major",
+      "risk": "在机匣侧面开抛壳口，或把装填口做成左右两个外部洞。",
+      "mitigation": "所有装填/抛壳都走握把后方的单一向下组合口；loading_port_L/R 只做内部定位点。"
+    },
+    {
+      "level": "minor",
+      "risk": "5 units 宽度可能让模型显得比真实 KSG 胖。",
+      "mitigation": "先按 5 units 做；并排对照 DP-12 后如果过胖，回退到 4.6-4.8 units，仍保留双管可读性。"
+    },
+    {
+      "level": "minor",
+      "risk": "参考图有版权，且部分图带水印/低分辨率。",
+      "mitigation": "只放在 refs/ksg/，绝不进 assets/ 或枪包；建模只参考轮廓，不描图。"
+    },
+    {
+      "level": "minor",
+      "risk": "早期 KSG 与 Tactical/Defender 在瞄具、枪托、护木上存在差异。",
+      "mitigation": "本 brief 按标准 KSG；如果后续要 Tactical 变体，另写 variant brief。"
+    }
+  ],
+  "reference_images": [
+    {
+      "file": "refs/ksg/img-01.jpg",
+      "kind": "side_view_left_official",
+      "source_url": "https://media.keltecweapons.com/wp-content/uploads/2018/11/KSG_left_DSC2878.png",
+      "source_page": "https://www.keltecweapons.com/firearm/shotguns/ksg/",
+      "use": "主侧视比例参考：枪托/机匣/枪管分段、导轨高度、握把位置、双管枪口。"
+    },
+    {
+      "file": "refs/ksg/img-02.jpg",
+      "kind": "side_view_right",
+      "source_url": "https://gununiversity.com/wp-content/uploads/2021/09/KEL-TEC-KSG-1.png",
+      "source_page": "https://gununiversity.com/",
+      "use": "右侧轮廓对照；确认没有侧面抛壳口、导轨连续、护木 M-LOK 槽位置。"
+    },
+    {
+      "file": "refs/ksg/img-03.jpg",
+      "kind": "loading_ejection_port_underside",
+      "source_url": "https://www.offgridweb.com/wp-content/uploads/2019/01/Kel-Tec-KSG-SRM-1216-12-gauge-shotgun-review-survival-prepping-defense-weapon-5-1024x385.jpg",
+      "source_page": "https://www.offgridweb.com/",
+      "use": "组合装填/抛壳口近景：开口在握把后方、枪身下方，内部有托弹板；确认不是侧抛。"
+    },
+    {
+      "file": "refs/ksg/img-04.jpg",
+      "kind": "tube_selector_part_drawing",
+      "source_url": "https://media.keltecweapons.com/wp-content/uploads/2021/11/products-ksg-333-selector_3.jpg",
+      "source_page": "https://www.keltecweapons.com/firearm/shotguns/ksg/",
+      "use": "选择杆零件线图：拨片形状、转轴孔、拇指拨动端；用于 tube_selector 的低模数几何。"
+    },
+    {
+      "file": "refs/ksg/img-05.jpg",
+      "kind": "front_three_quarter_muzzle",
+      "source_url": "https://gununiversity.com/wp-content/uploads/2021/09/keltec-ksg-review.jpg",
+      "source_page": "https://gununiversity.com/",
+      "use": "枪口/双管端面参考：枪管在上、两根弹仓管在下、两个管帽；确认双管是左右并列。"
+    },
+    {
+      "file": "refs/ksg/img-06.jpg",
+      "kind": "parts_diagram",
+      "source_url": "http://k.sinaimg.cn/n/sinacn/20170715/9e0d-fyiavtv7606700.jpg/w700d1q75cms.jpg",
+      "source_page": "http://k.sinaimg.cn/",
+      "use": "拆解示意：橡胶托底、双弹仓管、枪管/护木、保险与扳机组；用于确认内部件关系和枪托包覆枪管的 bullpup 结构。图为第三方中文标注，术语以本 brief 为准。"
+    }
+  ],
+  "source_urls": [
+    "https://www.keltecweapons.com/firearm/shotguns/ksg/",
+    "https://order.keltecweapons.com/ksg.html",
+    "https://en.wikipedia.org/wiki/KelTec_KSG",
+    "https://gunsmagazine.com/discover/keltec-ksg-bullpup/",
+    "https://www.gunsandammo.com/editorial/review-kel-tec-ksg-25/247558",
+    "https://www.gtdist.com/products/guns-firearms/shotguns/kel-tec-12ga-shotgun-le-only.html",
+    "https://storage.courtlistener.com/recap/gov.uscourts.ca9.345123/gov.uscourts.ca9.345123.15.18.pdf",
+    "https://www.thektog.org/threads/loading-unloading-the-magazines.253975/",
+    "https://www.ar15.com/forums/armory/-ARCHIVED-THREAD-New-Kel-Tec-KSG-bullpup-shotgun-/1-332695/?page=4#i2994210",
+    "https://media.keltecweapons.com/wp-content/uploads/2018/11/KSG_left_DSC2878.png",
+    "https://media.keltecweapons.com/wp-content/uploads/2021/11/products-ksg-333-selector_3.jpg",
+    "https://gununiversity.com/wp-content/uploads/2021/09/KEL-TEC-KSG-1.png",
+    "https://www.offgridweb.com/wp-content/uploads/2019/01/Kel-Tec-KSG-SRM-1216-12-gauge-shotgun-review-survival-prepping-defense-weapon-5-1024x385.jpg"
+  ],
+  "handoff": {
+    "to_modeler": "按 37.5 × 10 × 5 units、side-view 轮廓和 20 个合同 bone 建模；重点做 bullpup 枪托包覆枪管、双管端面、握把后方单一向下组合口、三位置选择杆；泵动护木要能后移 3 units。",
+    "to_data_smith": "ammo 用 tacz:12g，ammo_amount=14，bolt=manual_action，state machine 继承 manual_action 并加 ksg_state_machine；shell 向下抛；选择杆只做视觉，不要承诺左右管独立计数。",
+    "to_reviewer": "重点检查：是否侧面开了抛壳口、是否把 loading_port_L/R 做成外部双洞、宽度是否过胖、选择杆是否在握把后方下方、向下抛壳方向、14+1 与 12+1 的说明是否清楚。"
+  }
+}

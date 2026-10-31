@@ -66,4 +66,4 @@ Bedrock 1.8.0；名字必须与官方 `default_state_machine.lua` 的 `runAnimat
 
 ## 7. 官方基准
 
-本地 `TACZ_SOURCE`/`vendor/TACZ`/已解压 jar 优先；缺了用 `tacz_spec` 从 `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。
+本地 `TACZ_SOURCE`/`vendor/TACZ`/工作目录/缓存优先；全落空才用 `tacz_spec` 从 `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。

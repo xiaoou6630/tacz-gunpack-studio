@@ -1,0 +1,569 @@
+{
+  "gun_id": "ksg",
+  "parts": [
+    {
+      "name": "Receiver / action housing",
+      "bone": "receiver",
+      "description": "黑色低饱和蓝灰聚合物机匣，Z≈-2.0..+6.25、Y≈5.5..9.9、X≈±1.625；bullpup 布局，核心/下机匣/顶盖/侧板/前后斜面/螺钉分层，组合口在下方 Z≈6.0..7.0。",
+      "cubes": []
+    },
+    {
+      "name": "Barrel",
+      "bone": "barrel",
+      "description": "固定枪管，轴线 Y=8.2，Z≈-18.75..-1.75；八边形截面由 8 条长条 + 中心芯组成，外径约 1.15；前后各有一圈 8 片加强环，枪口 -Z，无制退器。",
+      "cubes": []
+    },
+    {
+      "name": "Dual magazine tubes",
+      "bone": "mag_tubes",
+      "description": "两根并列八边形管式弹仓，中心 X=±0.6875、Y≈6.6、Z≈-18.5..+6.75；每根由 8 条长条 + 芯 + 8 片前环组成，固定不随 pump 移动；后端接组合口内 loading_port。",
+      "cubes": []
+    },
+    {
+      "name": "Pump / forend",
+      "bone": "pump",
+      "description": "低饱和蓝灰聚合物滑动护木，Z≈-14.75..-6.25、Y≈5.1..9.1、X≈±1.8125；上下/左右/前后端盖与四角倒角，侧面 4 条 M-LOK 槽，底部 pump_rail 为 0.75 宽 1-5-1 短轨；泵动行程由 data-smith 按新尺度补。",
+      "cubes": []
+    },
+    {
+      "name": "Top Picatinny rail",
+      "bone": "top_rail",
+      "description": "顶部皮卡汀尼导轨，底宽 0.75、Z≈-16.75..+3.5、Y≈10.25..10.75；1-5-1 齿型（0.25 单位，1 空-5 齿-1 空），下带 0.6 宽支撑脊与前后支撑；前/后 flip-up 瞄具装在齿顶。",
+      "cubes": []
+    },
+    {
+      "name": "Stock",
+      "bone": "stock",
+      "description": "bullpup 枪托壳体，Z≈+5.75..+12.5、Y≈5.0..10.0、X≈±1.625；实心芯 + 上下侧板 + 贴腮 + 前箍 + 后桥，侧面三角形减重凹槽和接缝；后端接橡胶托底。",
+      "cubes": []
+    },
+    {
+      "name": "Pistol grip",
+      "bone": "pistol_grip",
+      "description": "近垂直握把，Z≈3.9..6.2、Y≈3.25..6.5、X≈±1.06；上/中/下三段 + 前后带 + 侧板 + 三道防滑肋，底部 Y≈3.25 决定总高。",
+      "cubes": []
+    },
+    {
+      "name": "Trigger",
+      "bone": "trigger",
+      "description": "护圈内扳机片，pivot=(0,5.3,4.85)，Z≈4.75..5.0、Y≈4.4..5.3；含扳机片、鞋、pin，开火时 data-smith 转 -8°。",
+      "cubes": []
+    },
+    {
+      "name": "Trigger guard",
+      "bone": "trigger_guard",
+      "description": "低饱和聚合物护圈，Z≈3.25..6.0、Y≈4.25..5.4、X≈±0.6；前/下/后三段 + 侧唇，开口足够容纳扳机片。",
+      "cubes": []
+    },
+    {
+      "name": "Cross-bolt safety",
+      "bone": "safety",
+      "description": "横推式保险，pivot=(0,6.0,5.65)，Z≈5.5..5.8；钢制横栓 + 白/红两端帽，左右各露约 0.25。",
+      "cubes": []
+    },
+    {
+      "name": "Magazine tube selector",
+      "bone": "tube_selector",
+      "description": "三位置弹仓选择杆，pivot=(0,5.6,7.0)，位于双管尾端、握把后方下方；轴 + 拨片 + 拇指片，可从下方和侧方看到，动画只做视觉旋转。",
+      "cubes": []
+    },
+    {
+      "name": "Combined ejection port",
+      "bone": "ejection_port",
+      "description": "单一向下组合口，Z≈6.0..7.0、Y≈4.9..5.5、X≈±1.25；前/后/侧唇 + 深色内壁，无侧面抛壳口；shell locator 在内侧。",
+      "cubes": []
+    },
+    {
+      "name": "Left tube loading mouth",
+      "bone": "loading_port_L",
+      "description": "左管在组合口内的装填入口，pivot=(-0.6875,5.5,6.875)；内部短口，不是第二个外部洞；子骨 loading_gate_L 可做装填动画。",
+      "cubes": []
+    },
+    {
+      "name": "Right tube loading mouth",
+      "bone": "loading_port_R",
+      "description": "右管在组合口内的装填入口，pivot=(0.6875,5.5,6.875)；与左口对称，间距 1.375。",
+      "cubes": []
+    },
+    {
+      "name": "Rubber buttpad",
+      "bone": "buttpad",
+      "description": "橡胶托底，Z≈11.75..12.5、Y≈5.0..9.75、X≈±1.625；主垫 + 上下亮边，轮廓略大于枪托尾端。",
+      "cubes": []
+    },
+    {
+      "name": "Sling loop / slot",
+      "bone": "sling_loop",
+      "description": "枪托后下方背带环，pivot=(0,5.3,10.8)；两立柱 + 底杆的小 U 形，尺寸约 1.3×1.0×0.8。",
+      "cubes": []
+    },
+    {
+      "name": "Muzzle",
+      "bone": "muzzle",
+      "description": "枪口八边形端环，Z≈-19.25..-18.75、Y=8.2、X≈±0.55；8 片钢环 + 深色膛口芯，muzzle_pos/muzzle_flash 在 positioning2 下。",
+      "cubes": []
+    },
+    {
+      "name": "Front sight",
+      "bone": "front_sight",
+      "description": "导轨前端 flip-up 准星，pivot=(0,10.75,-15.625)；底座 Z≈-16.0..-15.5，柱顶 Y≈11.75，两侧护耳。",
+      "cubes": []
+    },
+    {
+      "name": "Rear sight",
+      "bone": "rear_sight",
+      "description": "导轨后端 flip-up 照门，pivot=(0,10.75,2.375)；底座 Z≈2.0..2.75，叶片顶 Y≈11.6，与准星同一高度基准。",
+      "cubes": []
+    },
+    {
+      "name": "Ejected shell",
+      "bone": "shell",
+      "description": "空弹壳抛壳定位点，pivot=(0,5.2,6.9)，位于组合口内侧、枪身下方；只做 locator，不建弹壳几何，速度由 display 控制。",
+      "cubes": []
+    }
+  ],
+  "bones": [
+    {
+      "name": "camera",
+      "parent": null,
+      "pivot": [
+        2.5,
+        11,
+        10
+      ]
+    },
+    {
+      "name": "root",
+      "parent": null,
+      "pivot": [
+        0,
+        8.2,
+        6.5
+      ]
+    },
+    {
+      "name": "bone2",
+      "parent": "root",
+      "pivot": [
+        0,
+        8,
+        2
+      ]
+    },
+    {
+      "name": "AKM",
+      "parent": "bone2",
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "positioning2",
+      "parent": "AKM",
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "stock_pos",
+      "parent": "positioning2",
+      "pivot": [
+        0,
+        8.0,
+        11.5
+      ]
+    },
+    {
+      "name": "muzzle_pos",
+      "parent": "positioning2",
+      "pivot": [
+        0,
+        8.2,
+        -19.75
+      ]
+    },
+    {
+      "name": "muzzle_flash",
+      "parent": "positioning2",
+      "pivot": [
+        0,
+        8.2,
+        -20.0
+      ]
+    },
+    {
+      "name": "scope_pos",
+      "parent": "positioning2",
+      "pivot": [
+        0,
+        10.9,
+        -4.0
+      ]
+    },
+    {
+      "name": "shell",
+      "parent": "positioning2",
+      "pivot": [
+        0,
+        5.2,
+        6.9
+      ]
+    },
+    {
+      "name": "lefthand",
+      "parent": "bullet_and_lefthand",
+      "pivot": [
+        -6,
+        19,
+        0
+      ]
+    },
+    {
+      "name": "righthand",
+      "parent": "gun_and_righthand",
+      "pivot": [
+        6,
+        19,
+        0
+      ]
+    },
+    {
+      "name": "lefthand_pos",
+      "parent": "lefthand",
+      "pivot": [
+        0,
+        8,
+        0
+      ]
+    },
+    {
+      "name": "righthand_pos",
+      "parent": "righthand",
+      "pivot": [
+        0,
+        8,
+        0
+      ]
+    },
+    {
+      "name": "positioning",
+      "parent": null,
+      "pivot": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "fixed",
+      "parent": "positioning",
+      "pivot": [
+        1.35,
+        8.275,
+        -0.05
+      ],
+      "rotation": [
+        0,
+        90,
+        0
+      ]
+    },
+    {
+      "name": "ground",
+      "parent": "positioning",
+      "pivot": [
+        0,
+        -4,
+        2
+      ]
+    },
+    {
+      "name": "thirdperson_hand",
+      "parent": "positioning",
+      "pivot": [
+        0,
+        6.825,
+        5.425
+      ]
+    },
+    {
+      "name": "views",
+      "parent": null,
+      "pivot": [
+        2,
+        12,
+        12
+      ]
+    },
+    {
+      "name": "idle_view",
+      "parent": "views",
+      "pivot": [
+        2.5,
+        11,
+        10
+      ]
+    },
+    {
+      "name": "iron_view",
+      "parent": "views",
+      "pivot": [
+        0,
+        10.25,
+        10
+      ]
+    },
+    {
+      "name": "receiver",
+      "parent": "AKM",
+      "pivot": [
+        0,
+        8.0,
+        2.25
+      ]
+    },
+    {
+      "name": "barrel",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        8.2,
+        -1.75
+      ]
+    },
+    {
+      "name": "mag_tubes",
+      "parent": "barrel",
+      "pivot": [
+        0,
+        6.6,
+        -5.875
+      ]
+    },
+    {
+      "name": "mag_tube_L",
+      "parent": "mag_tubes",
+      "pivot": [
+        -0.6875,
+        6.6,
+        -5.875
+      ]
+    },
+    {
+      "name": "mag_tube_R",
+      "parent": "mag_tubes",
+      "pivot": [
+        0.6875,
+        6.6,
+        -5.875
+      ]
+    },
+    {
+      "name": "muzzle",
+      "parent": "barrel",
+      "pivot": [
+        0,
+        8.2,
+        -19.25
+      ]
+    },
+    {
+      "name": "top_rail",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        10.375,
+        -6.625
+      ]
+    },
+    {
+      "name": "front_sight",
+      "parent": "top_rail",
+      "pivot": [
+        0,
+        10.75,
+        -15.625
+      ]
+    },
+    {
+      "name": "rear_sight",
+      "parent": "top_rail",
+      "pivot": [
+        0,
+        10.75,
+        2.375
+      ]
+    },
+    {
+      "name": "stock",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        8.0,
+        8.75
+      ]
+    },
+    {
+      "name": "buttpad",
+      "parent": "stock",
+      "pivot": [
+        0,
+        8.0,
+        12.125
+      ]
+    },
+    {
+      "name": "sling_loop",
+      "parent": "stock",
+      "pivot": [
+        0,
+        5.3,
+        10.8
+      ]
+    },
+    {
+      "name": "pistol_grip",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        6.5,
+        4.75
+      ]
+    },
+    {
+      "name": "trigger_guard",
+      "parent": "pistol_grip",
+      "pivot": [
+        0,
+        5.2,
+        4.75
+      ]
+    },
+    {
+      "name": "trigger",
+      "parent": "trigger_guard",
+      "pivot": [
+        0,
+        5.3,
+        4.85
+      ]
+    },
+    {
+      "name": "safety",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        6.0,
+        5.65
+      ]
+    },
+    {
+      "name": "tube_selector",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        5.6,
+        7.0
+      ]
+    },
+    {
+      "name": "ejection_port",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        5.2,
+        6.95
+      ]
+    },
+    {
+      "name": "loading_port_L",
+      "parent": "ejection_port",
+      "pivot": [
+        -0.6875,
+        5.5,
+        6.875
+      ]
+    },
+    {
+      "name": "loading_port_R",
+      "parent": "ejection_port",
+      "pivot": [
+        0.6875,
+        5.5,
+        6.875
+      ]
+    },
+    {
+      "name": "pump",
+      "parent": "receiver",
+      "pivot": [
+        0,
+        7.0,
+        -10.75
+      ]
+    },
+    {
+      "name": "pump_rail",
+      "parent": "pump",
+      "pivot": [
+        0,
+        5.0,
+        -10.75
+      ]
+    },
+    {
+      "name": "loading_gate_L",
+      "parent": "loading_port_L",
+      "pivot": [
+        -0.6875,
+        5.25,
+        7.0
+      ]
+    },
+    {
+      "name": "loading_gate_R",
+      "parent": "loading_port_R",
+      "pivot": [
+        0.6875,
+        5.25,
+        7.0
+      ]
+    },
+    {
+      "name": "bullet_and_lefthand",
+      "parent": "root",
+      "pivot": [
+        0,
+        7.625,
+        -1.59375
+      ]
+    },
+    {
+      "name": "gun_and_righthand",
+      "parent": "root",
+      "pivot": [
+        0,
+        7,
+        8
+      ]
+    }
+  ],
+  "palette": [
+    "#2B333C",
+    "#39434E",
+    "#4B5563",
+    "#5C6877",
+    "#66717E",
+    "#7D8996",
+    "#535C67",
+    "#3A424B",
+    "#8F4A4A",
+    "#D8DCE0",
+    "#232A32",
+    "#6F7A87"
+  ]
+}

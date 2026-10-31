@@ -2,7 +2,7 @@
 
 面向 TACZ 枪包（1.20.1，`tacz_default_gun` 格式）的速查。来源：TACZ 官方 Wiki 与默认枪包 display 文件；文中 `tacz:` 是默认命名空间，自己的包要换成自己的 namespace。
 
-> 官方基准怎么找：本地优先（`TACZ_SOURCE`、`vendor/TACZ`、已解压 jar、缓存），缺了用 `tacz_spec` 从官方 GitHub `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。
+> 官方基准怎么找：本地优先（`TACZ_SOURCE`、`vendor/TACZ`、工作目录、缓存），全落空才用 `tacz_spec` 从官方 GitHub `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。
 
 ## 1. display 里要写什么
 
