@@ -58,9 +58,9 @@ This is the main prompt-size reduction: a teammate no longer carries all 80 Bloc
 
 ## Animation and state machine
 
-- [docs/tacz-animation-state-machine.md](../docs/tacz-animation-state-machine.md) documents display fields (`animation`, `state_machine`, `state_machine_param`, `sounds`), Bedrock 1.8.0 animation JSON, the Lua state-machine structure/API, and the review checklist.
-- [docs/tacz-spec.md](../docs/tacz-spec.md) is the canonical, verified pack layout/naming/data/reference checklist.
-- [docs/tacz-baseline-source.md](../docs/tacz-baseline-source.md) defines the portable source order: local `TACZ_SOURCE` / `vendor/TACZ` / jar extract / cache, then GitHub `MCModderAnchor/TACZ@1.20.1`.
+- [docs/tacz-animation-state-machine.md](../../docs/tacz-animation-state-machine.md) documents display fields (`animation`, `state_machine`, `state_machine_param`, `sounds`), Bedrock 1.8.0 animation JSON, the Lua state-machine structure/API, and the review checklist.
+- [docs/tacz-spec.md](../../docs/tacz-spec.md) is the canonical, verified pack layout/naming/data/reference checklist.
+- [docs/tacz-baseline-source.md](../../docs/tacz-baseline-source.md) defines the portable source order: local `TACZ_SOURCE` / `vendor/TACZ` / jar extract / cache, then GitHub `MCModderAnchor/TACZ@1.20.1`.
 - `data-smith` owns display references and Lua; `modeler` owns animation-ready bones/pivots; `reviewer` checks references, names, loops, and Lua syntax.
 - The studio still uses the modeler for the rig; add a dedicated animator role only when the user asks for full animation production.
 
@@ -93,7 +93,7 @@ worktrees.
 
 ## Build controller
 
-`tacz_build` is the deterministic one-gun controller: `INIT → RESEARCH → BLUEPRINT → GEOMETRY → DATA → REVIEW → PACKAGE → READY → DONE`. It owns `.tacz/builds/<gun>.json`, refuses wrong stage/owner advances, re-reads artifacts instead of trusting summaries, binds `REVIEW` to the pack fingerprint, and requires the human in-game `ack` before `DONE`. Full stage/artifact schema: [docs/tacz-build-controller.md](../docs/tacz-build-controller.md).
+`tacz_build` is the deterministic one-gun controller: `INIT → RESEARCH → BLUEPRINT → GEOMETRY → DATA → REVIEW → PACKAGE → READY → DONE`. It owns `.tacz/builds/<gun>.json`, refuses wrong stage/owner advances, re-reads artifacts instead of trusting summaries, binds `REVIEW` to the pack fingerprint, and requires the human in-game `ack` before `DONE`. Full stage/artifact schema: [docs/tacz-build-controller.md](../../docs/tacz-build-controller.md).
 
 ## Lessons
 
@@ -116,7 +116,7 @@ The desktop profile now contains:
 - `dsh.profile.bundles` also includes `@deepseek-ai/dsh-experimental-agent-team-profile` (host Agent Teams tools)
 - `node_modules/dsh-tacz-gunpack` is a directory junction to this package
 - `plugin_manager` shows the bundle `installed: true`; `set_bundle` returned `application: "applied"`
-- the package ships `locale/{en,zh}.json`, `icon.svg`, and `engines.dsh`; see [plugin-spec-compliance.md](../docs/plugin-spec-compliance.md)
+- the package ships `locale/{en,zh}.json`, `icon.svg`, and `engines.dsh`; see the repository README
 
 `plugin_manager install_bundle` itself may fail with `ERR_PNPM_UNEXPECTED_STORE` when the profile's pnpm store is v10 and the installer uses v11. In that case, add the three entries above manually (junction avoids re-running pnpm), then call:
 

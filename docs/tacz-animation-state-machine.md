@@ -1,36 +1,46 @@
-# TACZ 动画、状态机与声音
+# 动画、状态机和声音怎么填
 
-面向 TACZ 枪包（1.20.1，`tacz_default_gun` 格式）的速查。来源：TACZ 官方 Wiki 与默认枪包 display 文件；文中 `tacz:` 是默认命名空间，自己的包要换成自己的 namespace。
+给 TACZ 枪包用的速查（1.20.1，`tacz_default_gun` 格式）。
+内容来自官方 Wiki 和官方默认枪包的 display 文件。
 
-> 官方基准怎么找：本地优先（`TACZ_SOURCE`、`vendor/TACZ`、工作目录、缓存），全落空才用 `tacz_spec` 从官方 GitHub `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。
+> 文中 `tacz:` 是官方默认命名空间。**你自己的包要换成自己的命名空间。**
 
-## 0. 同一份动画能不能两边通用
+> 官方基准文件怎么找：先在你电脑上找，全没有才联网。详见
+> [官方基准文件从哪来](tacz-baseline-source.md)。
 
-**能。** TaCZ 与 Blockbench 用的都是 Bedrock 动画格式，`tacz_gun action="open"` 会把
-`assets/<ns>/animations/<id>.animation.json` 读进工程，Blockbench 的
-`AnimationCodec.codecs.bedrock.compileFile()` 又能把它写回同一种文件。
+---
 
-两边只有三处约定不同，都是可逆的：
+## 先说一个好消息：动画两边通用
 
-| | TaCZ / Bedrock 文件 | Blockbench 工程内 |
+**同一份动画，Blockbench 和游戏都能用。**
+
+因为两边都是 Bedrock 动画格式。`tacz_gun action="open"` 会把
+`assets/<命名空间>/animations/<枪名>.animation.json` 读进工程，
+Blockbench 又能把它写回同一种文件。
+
+只有三处约定不同，而且都是可逆的：
+
+| | 游戏里的文件 | Blockbench 工程里 |
 |---|---|---|
 | 片段名 | `static_idle` | `animation.static_idle`（导出时去掉前缀） |
-| rotation | 原值 | **x、y 取反**（导出时再取反，抵消） |
-| position | 原值 | **x 取反**（同上抵消） |
+| 旋转 | 原值 | **x、y 取反**（导出时再取反，正好抵消） |
+| 位移 | 原值 | **x 取反**（同上抵消） |
 
-实测（KSG，12 段 / 89 通道 / 198 个关键帧）往返后：
+实测过（KSG，12 段动画、89 个通道、198 个关键帧）：
 
-- 所有骨骼的 rotation / position 数值**逐值一致**
-- 片段名、`loop`、`animation_length` 一致
-- 时间轴**只剩 1/120 秒量级的取整**（见下）
+- 所有骨骼的旋转、位移数值**逐个一致**
+- 片段名、循环方式、时长一致
+- 时间轴**有 1/120 秒量级的取整**（下面解释）
 
-### 两个已知的等价差异，不影响播放
+### 两个不影响播放的差异
 
-**1. `scale: [1,1,1]` 导出时被省略。**
-Blockbench 视 `[1,1,1]` 为默认值，不写进文件。Bedrock 里缺省即 1，所以语义相同。
+**一、`scale: [1,1,1]` 导出时会被省略。**
 
-**2. 时间被吸附到 1/120 秒网格。**
-Blockbench 的 `Timeline.snapTime` 实现是：
+Blockbench 认为 `[1,1,1]` 是默认值，不写进文件。Bedrock 里没写就是 1，意思一样。
+
+**二、时间会被吸附到 1/120 秒的格子上。**
+
+Blockbench 里控制这个的代码是：
 
 ```js
 snapTime(i, e) {
@@ -39,17 +49,21 @@ snapTime(i, e) {
 }
 ```
 
-**`snapping` 被硬性 clamp 在 1–120**，所以最细网格是 1/120 秒。
-TaCZ 的 `0.12` 这类值不在网格上，往返后变成 `0.1167`，误差 **3.33 毫秒**，
-约为 24fps 一帧的 8%。
+`snapping` 被**硬性限制在 1–120**，所以最细只能到 1/120 秒。
 
-本插件的导入把 `snapping` 设为 **120**（上限），把误差压到最小；Blockbench 的默认值 10
-会把 `0.05`/`0.12`/`0.45` 全部collapse 到 0.1 网格，误差大一个数量级。
+TACZ 里 `0.12` 这种值不在格子上，往返一次会变成 `0.1167`，
+误差 **3.33 毫秒**，大约是 24fps 一帧的 8%。
 
-> 想让时间**完全无损**，就别在 Blockbench 里导出动画：游戏侧直接分发原始
-> `*.animation.json`，只在 Blockbench 里做可视化和微调。
+本插件导入时把 `snapping` 设成 **120**（上限），把误差压到最小。
+Blockbench 默认值是 10，会把 `0.05`、`0.12`、`0.45` 全压到 0.1 的格子上，误差大一个数量级。
 
-## 1. display 里要写什么
+> **想要时间完全无损**：别用 Blockbench 导出动画。游戏那边直接分发原始的
+> `*.animation.json`，Blockbench 只用来看着调。
+
+---
+
+## 一、display 里要写什么
+
 
 ```json
 {

@@ -1,98 +1,126 @@
-# TACZ build controller
+# 做枪的流程是怎么被管住的
 
-一个目标生成一整套枪包，靠的不是“更自由的 Lead”，而是一个确定性的 controller：agent 只产 artifact，controller 重读 artifact、跑 gate、推进状态；失败就 `BLOCKED`，人能 `resume`。
+## 为什么要有流程
 
-入口：`tacz_build`。状态文件：`<project>/.tacz/builds/<gun>.json`。
+让 AI 自由发挥做一把枪，会遇到这些问题：
 
-## 1. 状态机
+- 它说"做完了"，其实少了个文件
+- 你中途关掉会话，进度全丢
+- 审核说"没问题"，但模型其实改过了
+- 它自己打包交付，你进游戏才发现装不上
 
-```text
-INIT → RESEARCH → BLUEPRINT → GEOMETRY → DATA → REVIEW → PACKAGE → READY → DONE
+所以这里用了一个"卡流程"的工具 `tacz_build`：**AI 只负责产出文件，工具负责检查文件、推进进度。**
+
+进度存在 `.tacz/builds/<枪名>.json`，随时可以接着做。
+
+---
+
+## 九个阶段，不能跳
+
+```
+建目录 → 调研 → 画施工图 → 建模 → 写数据 → 审核 → 打包 → 你试 → 完成
 ```
 
-| Stage | Owner | 必须存在的 artifact / gate |
+| 阶段 | 谁负责 | 必须交出来的东西 |
 |---|---|---|
-| `INIT` | lead | `gunpack.meta.json` 已存在且 namespace 非空；`pack_dir` 在 `project_root` 之内 |
-| `RESEARCH` | researcher | `refs/<slug>/design-brief.json` + 同目录 `manifest.json`；brief 有非空 `parts`，`gun_id` 匹配 |
-| `BLUEPRINT` | modeler | blueprint JSON 有非空 `parts` 和 `bones` |
-| `GEOMETRY` | modeler | `models/<gun>.bbmodel`；`geo_models/gun/<gun>_geo.json`、`textures/gun/uv/<gun>.png`、`textures/gun/slot/<gun>.png`、`display/guns/<gun>_display.json` 存在；`tacz_verify.ok=true` |
-| `DATA` | data-smith | `index/guns/<gun>.json`、`data/guns/<gun>_data.json`、`display/guns/<gun>_display.json` 存在；`tacz_verify.ok=true` |
-| `REVIEW` | reviewer | `reviews/<gun>.json`：`ok=true`、`blockers=[]`、`pack_hash` 等于当前 pack fingerprint；`tacz_verify.ok=true` |
-| `PACKAGE` | lead | `output/<gun>.zip` 非空；`tacz_verify.ok=true` |
-| `READY` | human | 人工进游戏验持握/开火/换弹/动画/图标 |
-| `DONE` | human | `tacz_build action="ack" confirmed=true` |
+| **建目录** | 总监 | 枪包目录、`gunpack.meta.json`、命名空间 |
+| **调研** | 调研员 | `refs/<型号>/design-brief.json`（真实尺寸、口径、部件清单）+ 同目录的参考图清单 |
+| **画施工图** | 建模 | blueprint JSON：有哪些部件、挂哪根骨骼 |
+| **建模** | 建模 | `.bbmodel` 工程 + 导出的 geo + UV 贴图 + 槽位图 + display |
+| **写数据** | 数据 | index / data / display 三份 JSON |
+| **审核** | 审核 | `reviews/<枪名>.json`，结论通过且绑定当前文件指纹 |
+| **打包** | 总监 | `output/<枪名>.zip`，且交叉校验通过 |
+| **你试** | **你** | 进游戏试持握、开火、换弹、动画、图标 |
+| **完成** | **你** | 明确确认通过 |
 
-**blueprint 文件名的容错**：`gateFor()` 按这个顺序找，命中即用 ——
-`models/<gun>-blueprint.json`、`models/<gun>.blueprint.json`、`docs/<gun>-blueprint.json`。
+**每一关都会真的去磁盘上查文件，不看 AI 说了什么。**
 
-**review 文件的容错**：先找 `reviews/<gun>.json` 和 `reviews/<gun>-review.json`，
-都没有再到 `refs/*/review.json` 或 `refs/*/review-<gun>.json`。
+---
 
-`REVIEW` 的 `pack_hash` 是关键：reviewer 看过哪一版，就只能接受那一版。modeler 之后改了 geo/贴图，hash 变了，review 自动失效。
+## 审核为什么要绑定指纹
 
-## 2. 命令
+这是整套流程里最关键的一环。
 
-`tacz_build` 的 `action` 实际支持七个：
+审核报告里有个字段叫 `pack_hash`，记录的是"我审的是哪一版"。工具在放行时会重新算一遍当前文件的指纹：
 
-```text
-tacz_build action="init" project_root=... pack_dir=... gun_id=ksg type=shotgun
+- 对得上 → 审核有效
+- 对不上 → 审核**自动失效**，退回重审
+
+这样就不会出现"审核说没问题，但模型后来改了贴图"的情况。
+
+---
+
+## 常用操作
+
+```
+# 开一个新枪的流程
+tacz_build action="init" gun_id=ksg pack_dir=... type=shotgun
+
+# 看现在到哪一步了
 tacz_build action="status" gun_id=ksg
-tacz_build action="gate" gun_id=ksg                       # 只跑当前阶段的 gate，不推进
-tacz_build action="advance" gun_id=ksg stage=INIT owner=lead
-tacz_build action="advance" gun_id=ksg stage=RESEARCH owner=researcher
-tacz_build action="advance" gun_id=ksg stage=BLUEPRINT owner=modeler
+
+# 只检查当前这关能不能过，不推进
+tacz_build action="gate" gun_id=ksg
+
+# 推进一关（必须是对应负责人）
 tacz_build action="advance" gun_id=ksg stage=GEOMETRY owner=modeler
-tacz_build action="advance" gun_id=ksg stage=DATA owner=data-smith
-tacz_build action="advance" gun_id=ksg stage=REVIEW owner=reviewer
-tacz_build action="advance" gun_id=ksg stage=PACKAGE owner=lead
-tacz_build action="resume" gun_id=ksg                     # gate 失败修好后重跑
-tacz_build action="reopen" gun_id=ksg stage=GEOMETRY      # 回到更早阶段，note=原因
-tacz_build action="ack" gun_id=ksg confirmed=true note="in-game ok"
+
+# 卡住了，修好之后重试
+tacz_build action="resume" gun_id=ksg
+
+# 模型改过了，退回建模阶段重做
+tacz_build action="reopen" gun_id=ksg stage=GEOMETRY note="换了枪管"
+
+# 你进游戏试完，确认通过
+tacz_build action="ack" gun_id=ksg confirmed=true note="游戏内正常"
 ```
 
-- `advance` 只接受**当前** stage 和合法 owner；stage 不对或 owner 不对直接报错。
-- `gate` 是只读的：跑一遍检查、返回结果，不动状态文件。适合“我现在能不能过”的预检。
-- `gate` 不过时 `advance` 会把 state 变 `blocked`，`blocked_reason` 写清楚；修好后 `resume`。
-- `reopen` 只能往回走，不能往前（往前用 `advance`）。用于模型改了、旧 review 失效这类情况。
-- `status` 返回当前 gate 的每个 check + pack fingerprint。
-- `ack` 只能在 `READY` 后执行；没有人工确认不能 `DONE`。
+几个容易踩的点：
 
-## 3. Blueprint 格式
+- **`advance` 必须报当前阶段和对应负责人**，报错了直接拒绝
+- **`gate` 是只读的**，跑完不改任何东西，适合"我现在能不能过"的预检
+- **`reopen` 只能往回退**，往前推用 `advance`
+- **`ack` 只能在"你试"之后执行**，没有你的确认，流程永远到不了"完成"
 
-`models/<gun>-blueprint.json`：
+---
+
+## 施工图（blueprint）到底写什么
+
+`models/<枪名>-blueprint.json`，这个名字容易让人以为是"模型"，其实不是。
+
+**它是施工单，不是模型。**
 
 ```json
 {
   "gun_id": "ksg",
   "parts": [
     {
-      "name": "receiver",
+      "name": "机匣",
       "bone": "receiver",
       "cubes": [],
-      "description": "黑色低饱和蓝灰机匣，Z≈-2.0..+6.25，宽约 ±1.625"
+      "description": "黑色低饱和蓝灰机匣，Z 约 -2.0 到 +6.25，宽约 ±1.625"
     }
   ],
   "bones": [
-    { "name": "root", "parent": null, "pivot": [0, 0, 0] },
-    { "name": "receiver", "parent": "root", "pivot": [0, 5, 0] }
-  ],
-  "palette": ["#1b1b1b", "#3a3a3a"]
+    { "name": "root", "parent": null, "pivot": [0, 0, 0] }
+  ]
 }
 ```
 
-这是 **modeler 的施工清单 + reviewer 的对照依据**，不是代码输入。
-**没有任何模块会把 blueprint 编译成几何** —— modeler 拿到它之后，仍然是在 Blockbench 里建模。
+三条规则：
 
-`parts[].cubes` **永远留空**。gate 只检查 `parts` 和 `bones` 非空，没有任何代码读 `cubes`；
-把 `from`/`to` 写进去不代表建模，几何只在 Blockbench 里建。
-详见 [why-not-one-shot.md](why-not-one-shot.md) 第 1 节。
+1. **`cubes` 永远留空。** 写进去的几何没有任何代码会读，也不等于建模。
+2. **尺寸写在 `description` 里**，用自然语言，给建模的人看。
+3. **`parts` 和 `bones` 必须非空**，工具只检查这两项。
 
-> 实物参考：[`examples/ksg/ksg-blueprint.json`](../examples/ksg/ksg-blueprint.json)
-> —— 20 个部件、47 根骨骼，`cubes` 全为空，几何写在 `description` 里。
+> 参考实物：[`examples/ksg/ksg-blueprint.json`](../examples/ksg/ksg-blueprint.json)
+> —— 20 个部件、47 根骨骼，`cubes` 全空，几何描述写在 `description`。
 
-## 4. Review artifact
+---
 
-`reviews/<gun>.json`：
+## 审核报告写什么
+
+`reviews/<枪名>.json`：
 
 ```json
 {
@@ -100,22 +128,27 @@ tacz_build action="ack" gun_id=ksg confirmed=true note="in-game ok"
   "blockers": [],
   "majors": [],
   "minors": [],
-  "pack_hash": "<tacz_verify 返回的 fingerprint>",
-  "summary": "形状/贴图/数据/图标通过；实机待验"
+  "pack_hash": "<交叉校验返回的指纹>",
+  "summary": "形状、贴图、数据、图标都通过；实机待验"
 }
 ```
 
-`ok=true` 只在 blockers 为空时成立；发现 blocker 时 `ok=false` 并列出 `blockers`，controller 会停在 `REVIEW`/`BLOCKED`。
+- `ok=true` 只在 `blockers` 为空时成立
+- 发现阻塞问题就 `ok=false`，并把问题列进 `blockers`，流程会停在审核阶段
+- `pack_hash` 必须和当前文件指纹一致，否则不放行
 
-## 5. 为什么不是“Lead 自由做”
+---
 
-| 自由 Lead | controller |
+## 和"让 AI 自己随便做"的区别
+
+| 放任 AI 自己做 | 卡流程之后 |
 |---|---|
-| agent 说“完成了” | controller 重读 geo/display/zip |
-| 用户一停就丢进度 | `.tacz/builds/<gun>.json` 可 resume |
-| review 口头通过 | review 绑定 pack hash |
-| 改完模型旧 review 还算 | hash 不匹配即失效 |
-| agent 自己打包 | 只有 PACKAGE gate 过才 READY |
-| 无人工确认 | READY 后必须 `ack confirmed=true` |
+| AI 说完成了，其实没完成 | 工具去磁盘上查，不听它说 |
+| 你中途关掉，进度全丢 | 进度存盘，随时接着做 |
+| 审核口头说过了 | 审核绑定文件指纹，改一字节就失效 |
+| 模型改完，旧审核还算数 | 指纹不匹配，自动拦住 |
+| AI 自己就打 zip 交付 | 打包没通过，不许进下一步 |
+| 没人试过就宣布完成 | 必须你本人确认才算完 |
 
-这套机制是**产物驱动 + 门禁 + 可恢复**，借鉴的是工程控制论意义上的通用做法，不是某个具体项目的代码。设计取舍见 [why-not-one-shot.md](why-not-one-shot.md) 第 5 节。
+这套做法借鉴的是工程上通用的"产物驱动 + 门禁 + 可恢复"，不是某个具体项目的代码。
+设计取舍见 [为什么不能一键生成](why-not-one-shot.md)。

@@ -1,248 +1,274 @@
-# TACZ Wiki 权威规则对照（枪包工坊实现基线）
+# 官方 Wiki 定下的规矩（附我们踩过的坑）
 
-来源：<https://tacwiki.mcma.club/zh/gunpack> 全站（53 页），并以官方默认枪包
-`tacz_default_gun` 的磁盘实况交叉验证。
+来源：<https://tacwiki.mcma.club/zh/gunpack> 全站 53 页，
+并用官方默认枪包 `tacz_default_gun` 的磁盘实况逐条核对过。
 
-本文件记录**实现必须遵守的硬事实**，以及与早期实现不一致、已修正的点。
+这份只写**必须照做**的硬规则，以及我们早期做错、后来改对的点。
 
 ---
 
-## 1. 图标（`gun/display/03_hud`）
+## 一、两种图标
 
-| | slot 槽位图 | hud 平面图 |
+游戏里会用到两种图标，规格完全不同，**别搞混**：
+
+| | 槽位图（slot） | 平面图（HUD） |
 |---|---|---|
-| 尺寸 | 64×64（正方形） | 3:1，推荐 180×60 / 192×64 / **384×128** |
-| 相机 | **等轴视角右（2:1）** | **侧视** |
-| 着色 | **关闭软件内阴影着色** | **关闭软件内阴影着色** |
+| 尺寸 | 64×64 正方形 | 3:1，推荐 180×60 / 192×64 / **384×128** |
+| 相机角度 | **等轴视角，朝右** | **侧视** |
+| 阴影 | **关掉** | **关掉** |
 | 枪口朝向 | **朝右** | **朝左** |
-| 对齐 | 居中 | 长枪对齐中线；手枪等短枪**向右对齐** |
-| 路径 | `textures/gun/slot/<id>.png` | `textures/gun/hud/<id>.png` |
-| 字段 | `slot` | `hud`（可选 `hud_empty`） |
+| 对齐 | 居中 | 长枪对中线；手枪这类短枪**靠右对齐** |
+| 存放路径 | `textures/gun/slot/<枪名>.png` | `textures/gun/hud/<枪名>.png` |
+| display 字段 | `slot` | `hud`（打空时另有 `hud_empty`） |
 
-- 两张图都是 **render（保留模型自身配色）**，不是单色剪影。
-- 官方 ak47 slot 有 592 色、hud 有 18 色；m870 slot 438 色、hud 80 色。
-  所以「slot 纯色 / hud 纯色」都不成立 —— **纯色是误读，正确做法是关闭阴影**。
-- `hud_empty`：弹匣打空时替换的平面图；为空则对 `hud` 叠加红色着色。
+**一个流传很广的误解**：有人说图标要做成"纯色剪影"。这是误读。
 
-对应实现：`lib/tacz/constants.ts` 的 `TACZ_SLOT_STYLE` / `TACZ_HUD_STYLE`。
+官方 ak47 的槽位图有 592 种颜色，HUD 有 18 种；m870 槽位图 438 色，HUD 80 色。
+**它们都是保留模型自己配色的渲染图，只是关掉了阴影。**
 
-```ts
-TACZ_SLOT_STYLE = { angle: "iso",  flipX: false, flat: true, style: "render", size: 64 }
-TACZ_HUD_STYLE  = { angle: "side", flipX: true,  flat: true, style: "render", size: [384,128] }
-```
+`hud_empty` 是弹匣打空时替换用的。如果留空，游戏会在原 HUD 上叠一层红色。
 
 ---
 
-## 2. 弹药（`ammo/ammo`、`ammo/display`）
+## 二、弹药
 
-### 目录与命名
+### 文件怎么命名
 
 ```
-assets/<ns>/geo_models/ammo/<id>.json        ← 注意：没有 _geo 后缀
-assets/<ns>/textures/ammo/uv/<id>.png
-assets/<ns>/textures/ammo/slot/<id>.png
-assets/<ns>/geo_models/shell/<id>_shell.json
-assets/<ns>/textures/shell/<id>_shell.png
-assets/<ns>/geo_models/ammo_entity/<id>_entity_geo.json
-assets/<ns>/textures/ammo_entity/<id>_entity.png
-assets/<ns>/display/ammo/<id>_display.json
-data/<ns>/index/ammo/<id>.json
+assets/<命名空间>/geo_models/ammo/<弹药名>.json          ← 注意：没有 _geo
+assets/<命名空间>/textures/ammo/uv/<弹药名>.png
+assets/<命名空间>/textures/ammo/slot/<弹药名>.png
+assets/<命名空间>/geo_models/shell/<弹药名>_shell.json   ← 弹壳
+assets/<命名空间>/textures/shell/<弹药名>_shell.png
+assets/<命名空间>/geo_models/ammo_entity/<弹药名>_entity_geo.json
+assets/<命名空间>/textures/ammo_entity/<弹药名>_entity.png
+assets/<命名空间>/display/ammo/<弹药名>_display.json
+data/<命名空间>/index/ammo/<弹药名>.json
 ```
 
-官方包实况：`geo_models/ammo/12g.json`、`geo_models/shell/12g_shell.json`、
-`textures/ammo/slot/12g.png`。**弹药堆模型确实不带 `_geo`**，与枪
-（`gun/ak47_geo.json`）和配件（`attachment/silencer_geo.json`）不同。
+**最容易踩的坑：弹药模型不带 `_geo`，但枪和配件都带。**
 
-### index 字段
+- 枪：`gun/ak47_geo.json`
+- 配件：`attachment/silencer_geo.json`
+- 弹药：`ammo/12g.json` ← 没有 `_geo`
+
+官方包实况确认过：`geo_models/ammo/12g.json`、`geo_models/shell/12g_shell.json`。
+
+### 登记表字段
 
 ```json
-{ "name": "<ns>.ammo.<id>.name", "display": "<ns>:<id>_display", "stack_size": 36, "sort": 24 }
+{ "name": "<命名空间>.ammo.<弹药名>.name", "display": "<命名空间>:<弹药名>_display", "stack_size": 36, "sort": 24 }
 ```
 
 ### display 字段
 
 ```json
 {
-  "model": "<ns>:ammo/<id>",
-  "texture": "<ns>:ammo/uv/<id>",
-  "slot": "<ns>:ammo/slot/<id>",
-  "shell":   { "model": "<ns>:shell/<id>_shell", "texture": "<ns>:shell/<id>_shell" },
-  "entity":  { "model": "<ns>:ammo_entity/<id>_entity_geo", "texture": "<ns>:ammo_entity/<id>_entity" },
+  "model": "<命名空间>:ammo/<弹药名>",
+  "texture": "<命名空间>:ammo/uv/<弹药名>",
+  "slot": "<命名空间>:ammo/slot/<弹药名>",
+  "shell":  { "model": "<命名空间>:shell/<弹药名>_shell", "texture": "<命名空间>:shell/<弹药名>_shell" },
+  "entity": { "model": "<命名空间>:ammo_entity/<弹药名>_entity_geo", "texture": "<命名空间>:ammo_entity/<弹药名>_entity" },
   "tracer_color": "#FF3030",
   "transform": { "scale": { "thirdperson": [0.75,0.75,0.75], "ground": [0.75,0.75,0.75], "fixed": [1.5,1.5,1.5] } }
 }
 ```
 
-**`tracer_color` 属于 display，不属于 index。** 早期实现放在 index，已修正。
-`tracer_color` 必须是 `#RRGGBB`，其它写法会被静默忽略并回退白色。
+**`tracer_color`（弹道颜色）写在 display 里，不写在 index 里。** 我们早期写错了，已修正。
+
+而且它必须是 `#RRGGBB` 格式，写成别的样子会被静默忽略，回退成白色。
 
 ---
 
-## 3. 配件（`attachment/attachment`、`attachment/data`、`attachment/display`）
+## 三、配件
 
-### 目录
+### 文件放哪
 
 ```
-assets/<ns>/geo_models/attachment/<id>_geo.json
-assets/<ns>/geo_models/attachment/lod/<id>.json
-assets/<ns>/textures/attachment/uv/<id>.png
-assets/<ns>/textures/attachment/slot/<id>.png
-assets/<ns>/textures/attachment/lod/<id>.png
-assets/<ns>/display/attachments/<id>_display.json
-data/<ns>/index/attachments/<id>.json
-data/<ns>/data/attachments/<id>_data.json
+assets/<命名空间>/geo_models/attachment/<配件名>_geo.json
+assets/<命名空间>/geo_models/attachment/lod/<配件名>.json
+assets/<命名空间>/textures/attachment/uv/<配件名>.png
+assets/<命名空间>/textures/attachment/slot/<配件名>.png
+assets/<命名空间>/textures/attachment/lod/<配件名>.png
+assets/<命名空间>/display/attachments/<配件名>_display.json
+data/<命名空间>/index/attachments/<配件名>.json
+data/<命名空间>/data/attachments/<配件名>_data.json
 ```
 
-wiki 正文把模型目录写作 `models/attachment/`，但**官方包实际是
-`geo_models/attachment/`**（81 个文件），与枪的 `geo_models/gun/` 一致。
-以磁盘实况为准。
+**Wiki 正文写的是 `models/attachment/`，但官方包实际是 `geo_models/attachment/`**
+（81 个文件）。跟枪的 `geo_models/gun/` 一致。**以磁盘实况为准。**
 
-### index
+### 配件类型
 
-```json
-{ "name": "<ns>.attachment.<id>.name", "display": "<ns>:<id>_display", "data": "<ns>:<id>_data", "type": "scope", "sort": 10 }
+合法值只有六种：
+
+```
+scope   stock   muzzle   grip   laser   extended_mag
 ```
 
-### `type` 合法值（= `allow_attachment_types` 槽位）
+两个容易搞错的：
 
-`scope` · `stock` · `muzzle` · `grip` · `laser` · `extended_mag`
+- **`bayonet`（刺刀）不是一种类型。** 官方 `bayonet_m9` 的类型是 `muzzle`
+- **`ammo_mod`（弹药改装）是标签概念，不是槽位类型**
 
-- **`bayonet` 不是 type**：官方 `bayonet_m9` 的 type 是 `muzzle`。
-- `ammo_mod` 是 **tag 概念**，不是槽位 type。
-- 手枪通常省略 `stock`；最少可只保留 `scope` + `extended_mag`。
+手枪一般省略 `stock`，最少只留 `scope` + `extended_mag`。
 
-### display 必填/常用字段
+### display 常用字段
 
 `slot`（必填）、`model`、`texture`、`lod`、`sounds`、`scope`/`sight`、
 `zoom`、`views`、`views_fov`、`fov`、`adapter`、`laser`、`show_mount`、
-`show_muzzle`、`muzzle_flash_offset`、`text_show`。
+`show_muzzle`、`muzzle_flash_offset`、`text_show`
 
-- `scope` 与 `sight` 互斥：`scope`=筒状放大（ACOG/LPVO），`sight`=红点/全息。
-- 纯数据配件（弹药改装、弹匣）**不写 `model`/`texture`**。
-- 装卸音效优先复用官方通用键：
-  `attachment_general_a` / `attachment_general_b` /
-  `attachment_general_uninstall` / `muzzle_general` /
-  `scope_general_c` / `scope_general_e` /
-  `extended_mag_install` / `extended_mag_uninstall` /
-  `bayonet_install` / `bayonet_uninstall`。
-  早期默认值写成 `tacz:attachment_install`（不存在），已修正为
-  `tacz:attachments/attachment_general_b`。
+**`scope` 和 `sight` 互斥**：`scope` 是筒状放大（ACOG、LPVO），`sight` 是红点、全息。
 
-### 配件 data 三个乘区
+纯数据配件（弹药改装、弹匣）**不写 `model` 和 `texture`**。
+
+### 音效键名
+
+优先复用官方现成的：
 
 ```
-最终属性 = [基础值 + Σ addend] × [1 + Σ percent] × Π multiplier
+attachment_general_a / attachment_general_b
+attachment_general_uninstall
+muzzle_general
+scope_general_c / scope_general_e
+extended_mag_install / extended_mag_uninstall
+bayonet_install / bayonet_uninstall
+```
+
+我们早期默认值写成 `tacz:attachment_install`，**这个键不存在**，已改成
+`tacz:attachments/attachment_general_b`。
+
+### 配件属性怎么叠加
+
+```
+最终属性 = [基础值 + 所有加数] × [1 + 所有百分比] × 所有乘数
 ```
 
 常用词条：`weight`、`ads`、`inaccuracy`、`aim_inaccuracy`、
 `sneak_inaccuracy`、`lie_inaccuracy`、`move_inaccuracy`、`ammo_speed`、
 `pierce`、`rpm`、`silence`、`extended_mag_level`、`ignite`、`explosion`、
 `recoil`、`damage`、`armor_ignore`、`head_shot`、`knockback`、
-`recoil_push`、`melee`。
+`recoil_push`、`melee`
 
-旧写法 `ads_addend` / `recoil_modifier` 仍可用，新配件应用新写法。
+旧写法 `ads_addend`、`recoil_modifier` 还能用，但新配件建议用新写法。
 
 ---
 
-## 4. 枪械组名（`gun/03_sp_group_name`）
+## 四、模型必须有哪些组
 
 ### 硬性要求
 
-`root` · `magazine`（`mag_standard` / `mag_extended_1` / `mag_extended_2` /
-`mag_extended_3`，允许扩容时**四个全放**）· `constraint` · `camera`
+`root`、`magazine`、`constraint`、`camera`
 
-### 视觉定位组（`gun/05_gun_position`）
+弹匣组有四种：`mag_standard` / `mag_extended_1` / `mag_extended_2` / `mag_extended_3`。
+支持扩容的话，**四个都要放**。
 
-必放五个：`iron_view`、`idle_view`、`ground`、`thirdperson_hand`、`fixed`。
+### 五个必放的视角组
 
-配件界面视角（**缺了就「改枪飞天」**）：
+`iron_view`、`idle_view`、`ground`、`thirdperson_hand`、`fixed`
 
-`refit_view`（初始）· `refit_muzzle_view` · `refit_stock_view` ·
-`refit_scope_view` · `refit_extended_mag_view` · `refit_grip_view` ·
-`refit_laser_view`
+### 改枪界面视角（缺了会"枪飞天"）
 
-### 配件定位组
+```
+refit_view                 初始视角
+refit_muzzle_view          枪口
+refit_stock_view           枪托
+refit_scope_view           瞄具
+refit_extended_mag_view    扩容弹匣
+refit_grip_view            握把
+refit_laser_view           激光
+```
 
-`stock_pos` · `muzzle_pos` · `grip_pos` · `scope_pos` · `laser_pos`
+**七个全都要有。** 少一个，玩家进改枪界面就会看到枪飞出屏幕——这是最常见的问题。
+
+### 配件安装位置
+
+`stock_pos`、`muzzle_pos`、`grip_pos`、`scope_pos`、`laser_pos`
 
 ### 其他特殊组
 
-`additional_magazine` · `bullet_in_mag` · `sight` / `sight_folded` ·
-`muzzle_default` · `stock_default` · `attachment_adapter` ·
-`muzzle_flash` · `shell` · `handguard_default` · `mount` ·
-`_illuminated` 后缀发光组 · `text_show` 文本组
+`additional_magazine`、`bullet_in_mag`、`sight` / `sight_folded`、
+`muzzle_default`、`stock_default`、`attachment_adapter`、
+`muzzle_flash`、`shell`、`handguard_default`、`mount`、
+带 `_illuminated` 后缀的发光组、`text_show` 文本组
 
-### 手臂定位组（`gun/04_hand_pos`）
+### 手的位置
 
-`lefthand_pos` / `righthand_pos`。Steve 手模型 Position 偏移 (+4,0,-2) /
-(-8,0,-2)，Size (4,12,4)；Alex 用 Size (3,12,4)，偏移 (-7,0,-2)。
+`lefthand_pos` 和 `righthand_pos`
+
+- Steve 手模型：位置偏移 (+4, 0, -2) / (-8, 0, -2)，尺寸 (4, 12, 4)
+- Alex 手模型：尺寸 (3, 12, 4)，偏移 (-7, 0, -2)
 
 ---
 
-## 5. 配件槽与标签
+## 五、配件槽和标签
 
-### 枪械允许槽
+### 枪允许哪些槽
 
-`data/<ns>/data/guns/<gun>_data.json` 的 `allow_attachment_types`：
+写在 `data/<命名空间>/data/guns/<枪名>_data.json` 的 `allow_attachment_types`：
 
 ```json
 "allow_attachment_types": ["scope", "stock", "muzzle", "extended_mag", "laser"]
 ```
 
-### 专属/通用配件标签
+### 专属配件和通用配件
 
-- 专属：`data/<ns>/tacz_tags/attachments/allow_attachments/<gun>.json`
-  → `["#tacz:scope", "#tacz:muzzle_shotgun"]`
-- 通用：`data/tacz/tacz_tags/attachments/<tag>.json` → 具体配件 ID 列表
-- 官方实况：`data/tacz/tacz_tags/attachments/allow_attachments/` 有 51 个文件，
-  另有 `intrinsic/`。
+- **专属**：`data/<命名空间>/tacz_tags/attachments/allow_attachments/<枪名>.json`
+  → 内容如 `["#tacz:scope", "#tacz:muzzle_shotgun"]`
+- **通用**：`data/tacz/tacz_tags/attachments/<标签名>.json` → 具体配件 ID 列表
 
-### 原厂配件 / 专属属性
+官方包实况：`data/tacz/tacz_tags/attachments/allow_attachments/` 下有 51 个文件，
+另有 `intrinsic/` 目录。
 
-- `builtin_attachments`：虚拟原厂配件，三种写法（完整 / 简写 / 数组简写）。
-- `exclusive_attachments`：枪+配件组合的独有属性修正，叠加在配件原始数据之上。
+### 原厂配件
+
+- `builtin_attachments`：虚拟的原厂配件，有三种写法（完整 / 简写 / 数组简写）
+- `exclusive_attachments`：某把枪配某个配件时的独有属性修正，叠加在配件原始数据之上
 
 ---
 
-## 6. 配方
+## 六、合成配方
 
 - 类型：`tacz:gun_smith_table_crafting`
-- 路径：`data/<ns>/recipes/{gun,ammo,attachments}/<id>.json`
+- 路径：`data/<命名空间>/recipes/{gun,ammo,attachments}/<名字>.json`
 - 结构：`materials`（`{item:{tag|item}, count}`）+ `result`
 - `result`：`{type: "gun"|"ammo"|"attachment", id, count?, group?}`
-- 工作台配方过滤：`EnableDefaultGunSmithTableFilter` 默认 true，
-  白名单来自 `recipe_filters/default.json`（官方 `^.*$`）。
-  过滤器是**并集 merge**语义，包内加白名单只会放宽不会收窄。
+
+工作台默认开启配方过滤（`EnableDefaultGunSmithTableFilter`），白名单来自
+`recipe_filters/default.json`（官方是 `^.*$`）。
+
+**过滤是"并集"语义**：在包里加白名单只会放宽范围，不会收窄。
 
 ---
 
-## 7. 已修正的历史错误
+## 七、我们踩过并改掉的坑
 
-| 错误 | 正确做法 |
+| 早期错误 | 正确做法 |
 |---|---|
-| slot 用 `flat` 单色剪影 | slot 用 render + **关闭阴影**，枪口**朝右** |
-| hud 枪口朝右 | hud 枪口**朝左** |
-| hud 用 `style:"flat"` 单色 | hud 用 render + 关闭阴影，保留模型配色 |
-| `tracer_color` 写进 ammo index | 写进 ammo **display** |
-| 弹药模型 `ammo/<id>_geo.json` | `ammo/<id>.json`（无 `_geo`） |
+| 槽位图做成单色剪影 | 用渲染图 + **关阴影**，枪口**朝右** |
+| HUD 枪口朝右 | HUD 枪口**朝左** |
+| HUD 用单色 | 用渲染图 + 关阴影，保留模型配色 |
+| `tracer_color` 写进弹药 index | 写进弹药 **display** |
+| 弹药模型写成 `ammo/<名字>_geo.json` | `ammo/<名字>.json`（无 `_geo`） |
 | 默认配件音效 `tacz:attachment_install` | `tacz:attachments/attachment_general_b` |
-| `bayonet` 当作配件 type | `bayonet_m9` 的 type 是 `muzzle` |
-| 缺 `refit_*_view` 组 | 七个 refit 组必须存在，否则改枪界面模型飞出镜头 |
+| 把 `bayonet` 当成配件类型 | `bayonet_m9` 的类型是 `muzzle` |
+| 缺 `refit_*_view` 组 | 七个 refit 组必须齐，否则改枪界面模型飞出去 |
 | 弹药模板只有 `root` | 补 `fixed` / `thirdperson_hand` / `ground` |
 | 瞄具模板只有 `root` | 补 `scope_body` / `ocular_ring` / `ocular` / `division` / `scope_view` |
-| 配件 display 只有 4 个字段 | 支持 `zoom`/`scope`/`sight`/`views`/`views_fov`/`fov`/`adapter`/`lod`/`laser`/`show_mount`/`show_muzzle`/`muzzle_flash_offset`/`text_show` |
-| 校验器在 index 检查 tracer_color | 在 display 检查，且必须是 `#RRGGBB` |
+| 配件 display 只写了 4 个字段 | 支持 `zoom`/`scope`/`sight`/`views`/`views_fov`/`fov`/`adapter`/`lod`/`laser`/`show_mount`/`show_muzzle`/`muzzle_flash_offset`/`text_show` |
+| 校验器去 index 里找 `tracer_color` | 去 display 里找，且必须 `#RRGGBB` |
 
 ---
 
-## 8. 抓取方式
+## 八、这份文档是怎么核出来的
 
-wiki 站点可直接 HTTP 抓取（`urllib` / `Invoke-WebRequest` 均 200）。
-页面为 VitePress 静态站，正文在 HTML 中；去掉 `<script>`/`<style>` 后
-按标签切行即可读。控制台直出中文会乱码，**应写入 UTF-8 文件后用 read 读取**。
+Wiki 站点是 VitePress 静态站，可以直接抓：
 
-路径规律：
-- 章节首页：`/zh/gunpack/<section>/`（无 `.html`）
-- 具体页：`/zh/gunpack/<section>/<page>.html`
-- 导航链接可从任一页的 `href="/zh/gunpack..."` 提取，无需 sitemap
-  （站点无 `sitemap.xml`）。
+- 章节首页：`/zh/gunpack/<章节>/`（没有 `.html`）
+- 具体页：`/zh/gunpack/<章节>/<页面>.html`
+- 导航链接从任意页的 `href="/zh/gunpack..."` 就能提取，站点没有 sitemap
+
+正文在 HTML 里，去掉 `<script>` 和 `<style>` 后按标签切行就能读。
+
+> 注意：控制台直接输出中文会乱码，**要写进 UTF-8 文件再读**。

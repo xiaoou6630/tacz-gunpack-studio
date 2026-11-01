@@ -1,18 +1,20 @@
 # TACZ Gun Packs for Blockbench MCP
 
-This is a fork of [Blockbench MCP](https://github.com/jasonjgardner/blockbench-mcp-plugin) **v1.10.1** with a TACZ gun-pack layer. It keeps the upstream MCP server, tools, prompts, resources, and panel, and adds seven `tacz_*` tools.
+This is a fork of [Blockbench MCP](https://github.com/jasonjgardner/blockbench-mcp-plugin) **v1.10.1** with a TACZ gun-pack layer. It keeps the upstream MCP server, tools, prompts, resources, and panel, and adds **nine** `tacz_*` tools.
 
-License: **GPL-3.0-only**, inherited from upstream. If you distribute a build, publish the corresponding source and changes.
+License: **GPL-3.0-only**, inherited from upstream. If you distribute a build, publish the corresponding source and changes. See [`SOURCE.txt`](SOURCE.txt) for the full change list.
 
 ## New tools
 
 | Tool | What it does |
 |---|---|
 | `tacz_pack` | Create / inspect / validate / package a TACZ pack. Creates `gunpack.meta.json`, `assets/<ns>/gunpack_info.json`, model/texture/display/lang/data/recipe directories. |
-| `tacz_gun` | `new` builds a Bedrock gun project from a category template; `open` imports an existing `*_geo.json` + PNG; `export` writes geometry, UV PNG, 64x64 slot icon, index/data/display JSON, and language keys, then validates. |
+| `tacz_gun` | `new` builds a Bedrock gun project from a category template; `open` imports an existing `*_geo.json` + PNG **and its `*.animation.json`**; `export` writes geometry, UV PNG, 64x64 slot icon, index/data/display JSON, and language keys, then validates. |
+| `tacz_ammo` | Ammo art only: geometry at `geo_models/ammo/<id>.json` (**no `_geo` suffix**), UV atlas, slot icon. `art_only` is the default. |
+| `tacz_attachment` | Attachment art only: geometry at `geo_models/attachment/<id>_geo.json`, UV atlas, slot icon. Types: scope, stock, muzzle, grip, laser, extended_mag. |
 | `tacz_model_validate` | Bedrock format, required groups, locator groups, cube sizes, texture size, UV bounds. |
 | `tacz_texture_init` | Creates/assigns the 128x128 atlas, runs Auto UV, paints material-colored faces. |
-| `tacz_icon_render` | Offscreen render → alpha crop → 64x64 slot icon; optionally writes it. |
+| `tacz_icon_render` | Offscreen render → alpha crop. `target="slot"` gives 64x64 isometric-right, muzzle right; `target="hud"` gives 384x128 side view, muzzle left. Shading off for both. |
 | `tacz_template_list` | Lists categories, group/cube counts, texture size, default profile. |
 | `tacz_guide` | Workflow/model/texture/data/validate guide text. |
 

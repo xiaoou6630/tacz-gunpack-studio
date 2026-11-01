@@ -1,7 +1,7 @@
 # 示例：KSG（Kel-Tec KSG 泵动霰弹枪）
 
 一套**真实做出来并通过校验**的枪械工程文件，用来说明各阶段产物长什么样。
-文档里凡是提到 `<gun>`、`ksg`、示例 JSON 的地方，都以这里的实物为准。
+文档里凡是提到 `<枪名>`、`ksg`、示例 JSON 的地方，都以这里的实物为准。
 
 > 这不是模板，是案例。照抄结构，不要照抄尺寸 —— KSG 的比例是这一把枪的。
 
@@ -22,7 +22,7 @@
 
 ## 1. design-brief.json
 
-调研阶段的产物。gate 要求它有**非空 `parts`** 和同目录的 `manifest.json`（这里省略了 manifest，
+调研阶段的产物。流程要求它有**非空 `parts`** 和同目录的 `manifest.json`（这里省略了 manifest，
 真实项目里它记录每张参考图的来源 URL 和许可）。
 
 它决定了后面所有阶段的口径：这是 12 号霰弹、双管弹仓、泵动、无托布局。
@@ -48,14 +48,14 @@
 ```
 
 注意 `cubes` 是**空的** —— 实际这个文件里 20 个部件的 `cubes` 全为空，
-几何信息写在 `description` 的自然语言描述里，由 modeler 在 Blockbench 里实现。
+几何信息写在 `description` 的自然语言描述里，由 建模的 AI 在 Blockbench 里实现。
 
-gate 只检查两件事：`parts` 非空、`bones` 非空。
+流程只检查两件事：`parts` 非空、`bones` 非空。
 
 它的真实用途：
 
-- **modeler** 照着它知道有哪些部件、每个挂哪根骨骼；
-- **reviewer** 照着它知道这枪该有的部件齐不齐。
+- **建模的 AI** 照着它知道有哪些部件、每个挂哪根骨骼；
+- **审核的 AI** 照着它知道这枪该有的部件齐不齐。
 
 ---
 
@@ -123,7 +123,7 @@ reload_empty  reload_tactical  inspect  inspect_empty
 ### 为什么单独留这个文件
 
 它是 TACZ 枪包真正需要分发的文件（游戏读的是
-`assets/<ns>/animations/<id>.animation.json`，不是 `.bbmodel`）。
+`assets/<ns>/animations/<名字>.animation.json`，不是 `.bbmodel`）。
 保留它有两个作用：
 
 1. 让你看到**游戏侧原始格式**长什么样；
@@ -166,7 +166,7 @@ display 字段的完整示例。几个容易错的点：
 | `animation: keltec:ksg` | `assets/keltec/animations/ksg.animation.json` |
 | `state_machine: keltec:ksg_state_machine` | `assets/keltec/scripts/ksg_state_machine.lua` |
 
-> 弹药不一样：弹药模型是 `geo_models/ammo/<id>.json`，**不带** `_geo`。
+> 弹药不一样：弹药模型是 `geo_models/ammo/<名字>.json`，**不带** `_geo`。
 
 ---
 
@@ -193,9 +193,9 @@ fingerprint: 0ee9c56e…
 
 ## 想拿它当起点
 
-1. 复制 `ksg.bbmodel`，另存为你的 `<gun>.bbmodel`，改几何和贴图。
+1. 复制 `ksg.bbmodel`，另存为你的 `<枪名>.bbmodel`，改几何和贴图。
 2. 照着 `ksg-blueprint.json` 的结构写你自己的施工清单（`parts` / `bones` 非空即可）。
 3. 动画和状态机可以复用结构，但**片段名、骨骼名要跟你的模型一致**。
-4. display 照抄字段结构，把 namespace 和 `<gun>` 换掉。
+4. display 照抄字段结构，把 namespace 和 `<枪名>` 换掉。
 
 **不要**把 KSG 的尺寸直接套到别的枪上 —— 长度、宽度、导轨齿型都是按 KSG 的真实尺寸算的。
