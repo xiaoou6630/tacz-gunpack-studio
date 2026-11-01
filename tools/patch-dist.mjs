@@ -143,6 +143,33 @@ apply(
     'animationText:anText});',
 );
 
+// ---------------------------------------------------------------- Patch C
+// The MCP panel renders `formatSessionId(session)`, which prefers
+// `clientName` + `clientVersion` and falls back to `id.slice(0,8) + "..."`.
+// Client info was only captured from the server's `oninitialized` hook, which
+// fires on `notifications/initialized`. Clients that skip that notification
+// (the DeepSeek Harness MCP client does) leave every session as a bare hash.
+//
+// The SDK already stores `_clientVersion` during the initialize request itself
+// (`_oninitialize`), so read it once the session exists instead of waiting for
+// a notification that may never arrive.
+apply(
+  "C client info",
+  'onsessioninitialized:(nr)=>{console.log(`[MCP] Session initialized: ${nr.slice(0,8)}...`),' +
+    'lt.add(nr),a.set(nr,Mn);let Js=gn.server;Js.oninitialized=()=>{' +
+    'let ho=Js.getClientVersion();if(ho)lt.updateClientInfo(nr,ho.name,ho.version)}},',
+  'onsessioninitialized:(nr)=>{console.log(`[MCP] Session initialized: ${nr.slice(0,8)}...`),' +
+    'lt.add(nr),a.set(nr,Mn);let Js=gn.server;' +
+    // oninitialized only fires on notifications/initialized, which some
+    // clients never send. _oninitialize stores _clientVersion while handling
+    // the initialize request itself, but it runs after this callback, so poll
+    // briefly for it instead of waiting for a notification.
+    'let pollClient=()=>{try{let ho=Js.getClientVersion();' +
+    'if(ho&&ho.name){lt.updateClientInfo(nr,ho.name,ho.version);return!0}}catch{}return!1};' +
+    'Js.oninitialized=()=>pollClient();' +
+    'if(!pollClient()){let n=0,iv=setInterval(()=>{if(pollClient()||++n>20)clearInterval(iv)},50)}},',
+);
+
 fs.writeFileSync(target, text, "utf8");
 for (const line of log) console.log(`  ${line}`);
 console.log(`  chars ${before} -> ${text.length}`);
