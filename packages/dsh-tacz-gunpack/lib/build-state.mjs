@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import zlib from "node:zlib";
 import { ensureDir, insideRoot, writeTextAtomic } from "./paths.mjs";
 import { verifyPack } from "./verify-pack.mjs";
 
@@ -192,6 +193,191 @@ function hasFile(pack, rel) {
 }
 
 /**
+ * Measures whether the exported geometry will render as a gun or as an
+ * untextured block pile.
+ *
+ * The existence checks in the GEOMETRY gate pass for an atlas that was created
+ * but never painted, and for a model whose faces all collapsed onto one UV
+ * rectangle. Both look like success on disk and like grey mush on screen.
+ *
+ * Thresholds match `lib/tacz/quality.ts` on the Blockbench side, derived from
+ * measuring a good model against a broken one and against the official packs:
+ * official m870 has 424 colours; our broken export had 14 colours, 2% atlas
+ * coverage, and every cube at `uv: [0,0]`.
+ *
+ * @returns {Array<{name: string, ok: boolean, detail: string}>} checks
+ */
+export function measureGeometryQuality(pack, ns, gun, root) {
+  const checks = [];
+  const geoRel = `assets/${ns}/geo_models/gun/${gun}_geo.json`;
+  const uvRel = `assets/${ns}/textures/gun/uv/${gun}.png`;
+  const geoFile = path.join(pack, ...geoRel.split("/"));
+  const uvFile = path.join(pack, ...uvRel.split("/"));
+
+  // --- UV uniqueness, read from the exported geometry ---------------------
+  if (fs.existsSync(geoFile)) {
+    try {
+      const geo = JSON.parse(fs.readFileSync(geoFile, "utf8"));
+      const geometry = (geo["minecraft:geometry"] ?? [])[0] ?? {};
+      const cubes = [];
+      for (const bone of geometry.bones ?? []) for (const cube of bone.cubes ?? []) cubes.push(cube);
+
+      // A cube whose uv is [0,0] with no per-face rectangles samples one pixel.
+      const rectangles = new Set();
+      let faces = 0;
+      let collapsed = 0;
+      for (const cube of cubes) {
+        const uv = cube.uv;
+        if (Array.isArray(uv) && uv.length === 2) {
+          // Box UV: one offset describes the whole cube's unwrap, so count it
+          // as ONE unit rather than six faces. Counting six would divide the
+          // unique count by six and report a healthy model as overlapping.
+          rectangles.add(`${uv[0]},${uv[1]}`);
+          faces++;
+          if (Number(uv[0]) === 0 && Number(uv[1]) === 0) collapsed++;
+        } else if (uv && typeof uv === "object") {
+          for (const face of Object.values(uv)) {
+            if (!face || !face.uv) continue;
+            faces++;
+            rectangles.add(face.uv.join(","));
+          }
+        }
+      }
+      const uniquePercent = faces === 0 ? 0 : Math.round((rectangles.size / faces) * 100);
+      checks.push({
+        name: "quality.uv_unique",
+        ok: uniquePercent >= 70,
+        detail: `${uniquePercent}% of face UV rectangles are unique (minimum 70%); ${collapsed} faces sit at uv [0,0]`,
+      });
+    } catch (error) {
+      checks.push({ name: "quality.uv_unique", ok: false, detail: `cannot read ${geoRel}: ${error instanceof Error ? error.message : String(error)}` });
+    }
+  }
+
+  // --- Atlas content, read from the PNG header and pixel data -------------
+  if (fs.existsSync(uvFile)) {
+    const stats = measurePng(uvFile);
+    if (stats) {
+      checks.push({
+        name: "quality.texture_painted",
+        ok: stats.distinct >= 64,
+        detail: `${stats.distinct} distinct colours (minimum 64; official packs use 400+)`,
+      });
+      checks.push({
+        name: "quality.texture_coverage",
+        ok: stats.coverage >= 20,
+        detail: `${stats.coverage}% of the atlas carries pixels (minimum 20%)`,
+      });
+    }
+  }
+
+  // --- Detail level, informational ---------------------------------------
+  if (fs.existsSync(geoFile)) {
+    try {
+      const geo = JSON.parse(fs.readFileSync(geoFile, "utf8"));
+      const geometry = (geo["minecraft:geometry"] ?? [])[0] ?? {};
+      let cubes = 0;
+      for (const bone of geometry.bones ?? []) cubes += (bone.cubes ?? []).length;
+      checks.push({
+        name: "quality.detail",
+        ok: cubes >= 120,
+        detail: `${cubes} cubes (official high-poly guns use 273-761; below 120 is LOD-grade)`,
+      });
+    } catch {
+      // already reported by the UV check
+    }
+  }
+
+  return checks;
+}
+
+/**
+ * Decodes a PNG far enough to count distinct colours and pixel coverage.
+ *
+ * Uses zlib inflate on the raw IDAT stream and un-filters the scanlines, which
+ * avoids pulling in an image library just to answer two questions.
+ *
+ * @returns {{distinct: number, coverage: number} | undefined} stats
+ */
+function measurePng(file) {
+  try {
+    const buffer = fs.readFileSync(file);
+    let offset = 8; // skip the PNG signature
+    let width = 0;
+    let height = 0;
+    let bitDepth = 0;
+    let colorType = 0;
+    const idat = [];
+
+    while (offset < buffer.length) {
+      const length = buffer.readUInt32BE(offset);
+      const type = buffer.toString("ascii", offset + 4, offset + 8);
+      const data = buffer.subarray(offset + 8, offset + 8 + length);
+      if (type === "IHDR") {
+        width = data.readUInt32BE(0);
+        height = data.readUInt32BE(4);
+        bitDepth = data[8];
+        colorType = data[9];
+      } else if (type === "IDAT") {
+        idat.push(data);
+      } else if (type === "IEND") {
+        break;
+      }
+      offset += 12 + length;
+    }
+
+    // Only the 8-bit non-interlaced layouts TACZ atlases use.
+    if (bitDepth !== 8 || width === 0 || height === 0) return undefined;
+    const channels = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 }[colorType];
+    if (!channels) return undefined;
+
+    const raw = zlib.inflateSync(Buffer.concat(idat));
+    const stride = width * channels;
+    const previous = Buffer.alloc(stride);
+    const current = Buffer.alloc(stride);
+    const colors = new Set();
+    let covered = 0;
+    let position = 0;
+
+    for (let row = 0; row < height; row++) {
+      const filter = raw[position++];
+      raw.copy(current, 0, position, position + stride);
+      position += stride;
+      for (let i = 0; i < stride; i++) {
+        const left = i >= channels ? current[i - channels] : 0;
+        const up = previous[i];
+        const upLeft = i >= channels ? previous[i - channels] : 0;
+        let value = current[i];
+        if (filter === 1) value += left;
+        else if (filter === 2) value += up;
+        else if (filter === 3) value += Math.floor((left + up) / 2);
+        else if (filter === 4) {
+          const p = left + up - upLeft;
+          const pa = Math.abs(p - left);
+          const pb = Math.abs(p - up);
+          const pc = Math.abs(p - upLeft);
+          value += pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft;
+        }
+        current[i] = value & 0xff;
+      }
+      for (let x = 0; x < width; x++) {
+        const base = x * channels;
+        const alpha = channels === 4 ? current[base + 3] : channels === 2 ? current[base + 1] : 255;
+        if (alpha === 0) continue;
+        covered++;
+        if (colorType === 2 || colorType === 6) colors.add((current[base] << 16) | (current[base + 1] << 8) | current[base + 2]);
+        else colors.add(current[base]);
+      }
+      current.copy(previous);
+    }
+
+    return { distinct: colors.size, coverage: Math.round((covered / (width * height)) * 100) };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Runs the gate for the state's current stage.
  *
  * @returns {{ok: boolean, stage: string, owner: string, checks: object[], errors: string[], fingerprint?: string, artifacts: object}} gate
@@ -254,6 +440,14 @@ export function gateFor(state) {
       add("geometry.uv", hasFile(pack, `assets/${ns}/textures/gun/uv/${gun}.png`), `assets/${ns}/textures/gun/uv/${gun}.png exists`);
       add("geometry.slot", hasFile(pack, `assets/${ns}/textures/gun/slot/${gun}.png`), `assets/${ns}/textures/gun/slot/${gun}.png exists`);
       add("geometry.display", hasFile(pack, `assets/${ns}/display/guns/${gun}_display.json`), `assets/${ns}/display/guns/${gun}_display.json exists`);
+      // Existence checks above pass for an atlas that was created but never
+      // painted. Measure the files instead: a flat atlas or collapsed UVs make
+      // the gun render as an untextured block pile while every file "exists".
+      const quality = measureGeometryQuality(pack, ns, gun, root);
+      for (const check of quality) add(check.name, check.ok, check.detail);
+      if (!quality.every(check => check.ok)) {
+        artifacts.quality = Object.fromEntries(quality.map(check => [check.name, check.detail]));
+      }
     }
     if (stage === "DATA") {
       add("data.index", hasFile(pack, `data/${ns}/index/guns/${gun}.json`), `data/${ns}/index/guns/${gun}.json exists`);

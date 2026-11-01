@@ -1,10 +1,16 @@
 /**
  * Runtime checks on the live Blockbench project before a TACZ export.
  *
+ * Two kinds of check live here: structural ones (format, groups, sizes) that
+ * decide whether the pack loads at all, and the quality gates from
+ * `./quality` that decide whether it looks like a gun or like an untextured
+ * block pile.
+ *
  * @module
  */
 /// <reference types="blockbench-types" />
 import { TACZ_FORMAT_ID, TACZ_LOCATOR_GROUPS, TACZ_REQUIRED_GROUPS } from "@/lib/tacz/constants";
+import { validateTextureQuality } from "@/lib/tacz/quality";
 
 /** One model validation issue. */
 export interface IModelIssue {
@@ -20,6 +26,8 @@ export interface IModelValidationResult {
   groups: number;
   cubes: number;
   texture: { name: string; width: number; height: number } | null;
+  /** Measured quality numbers, so a failure can be quantified rather than argued about. */
+  quality: Record<string, number>;
   errors: IModelIssue[];
   warnings: IModelIssue[];
 }
@@ -74,5 +82,25 @@ export function validateCurrentModel(options: { strict?: boolean } = {}): IModel
       }
     }
   }
-  return { ok: errors.length === 0, format, groups: Group.all.length, cubes: Cube.all.length, texture: texture ? { name: texture.name, width: texture.width, height: texture.height } : null, errors, warnings };
+  // Quality gates: these answer "will it look like a gun?" rather than
+  // "will it load?". A model can pass every structural check above and still
+  // render as grey mush if the atlas was never painted or every face shares
+  // one UV rectangle.
+  let quality: Record<string, number> = {};
+  try {
+    const report = validateTextureQuality();
+    quality = report.stats;
+    for (const issue of report.issues) {
+      const entry: IModelIssue = { code: issue.code, severity: issue.severity, message: issue.message };
+      if (issue.severity === "error") errors.push(entry); else warnings.push(entry);
+    }
+  } catch (error) {
+    warnings.push({
+      code: "QUALITY_UNCHECKED",
+      severity: "warning",
+      message: `Texture quality could not be measured: ${error instanceof Error ? error.message : String(error)}.`,
+    });
+  }
+
+  return { ok: errors.length === 0, format, groups: Group.all.length, cubes: Cube.all.length, texture: texture ? { name: texture.name, width: texture.width, height: texture.height } : null, quality, errors, warnings };
 }

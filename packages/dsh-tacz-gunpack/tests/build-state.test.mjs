@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import zlib from "node:zlib";
 
 const { initBuild, statusBuild, advanceBuild, resumeBuild, ackBuild } = await import("../lib/build-state.mjs");
 const { verifyPack } = await import("../lib/verify-pack.mjs");
@@ -58,10 +59,80 @@ test("blueprint gate needs parts and bones", () => {
   assert.equal(advance.stage, "GEOMETRY");
 });
 
+/**
+ * Writes a minimal but *measurably good* geometry + atlas into the pack.
+ *
+ * The GEOMETRY gate now measures the exported files, not just their presence:
+ * an atlas with too few colours, or geometry whose faces all collapse onto one
+ * UV rectangle, fails. This fixture therefore has to carry real numbers —
+ * 150 cubes each with its own UV rectangle, and a PNG with 150 distinct colours
+ * covering the whole atlas.
+ */
+function writeRealGeometry() {
+  const cubes = [];
+  for (let i = 0; i < 150; i++) {
+    // Lay the atlas out as a 12-column grid of 10px cells so every cube gets a
+    // genuinely different box-UV origin, the way Auto UV would assign it.
+    const col = i % 12;
+    const row = Math.floor(i / 12);
+    cubes.push({
+      origin: [i * 0.01, 0, 0],
+      size: [1, 1, 1],
+      uv: [col * 10, row * 10],
+    });
+  }
+  const geo = {
+    format_version: "1.12.0",
+    "minecraft:geometry": [
+      {
+        description: { identifier: "geometry.ksg", texture_width: 128, texture_height: 128 },
+        bones: [{ name: "AKM", pivot: [0, 0, 0], cubes }],
+      },
+    ],
+  };
+  writePack("assets/keltec/geo_models/gun/ksg_geo.json", JSON.stringify(geo));
+
+  // A 128x128 PNG where every pixel is opaque and carries one of 150 colours.
+  const width = 128;
+  const height = 128;
+  const raw = Buffer.alloc(height * (width * 4 + 1));
+  let offset = 0;
+  for (let y = 0; y < height; y++) {
+    raw[offset++] = 0; // filter: none
+    for (let x = 0; x < width; x++) {
+      const shade = (x + y) % 150;
+      raw[offset++] = shade * 1.7 % 256;
+      raw[offset++] = shade * 1.3 % 256;
+      raw[offset++] = shade * 0.9 % 256;
+      raw[offset++] = 255;
+    }
+  }
+  const chunks = [];
+  const chunk = (type, data) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(zlib.crc32 ? zlib.crc32(body) : 0);
+    chunks.push(Buffer.concat([length, body, crc]));
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 6; // RGBA
+  chunk("IHDR", ihdr);
+  chunk("IDAT", zlib.deflateSync(raw));
+  chunk("IEND", Buffer.alloc(0));
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), ...chunks]);
+  const uvPath = path.join(pack, "assets/keltec/textures/gun/uv/ksg.png");
+  fs.mkdirSync(path.dirname(uvPath), { recursive: true });
+  fs.writeFileSync(uvPath, png);
+}
+
 test("geometry, data, review and package gates advance to READY", () => {
   write("models/ksg.bbmodel", "{}");
-  writePack("assets/keltec/geo_models/gun/ksg_geo.json", "{}");
-  writePack("assets/keltec/textures/gun/uv/ksg.png", "png");
+  writeRealGeometry();
   writePack("assets/keltec/textures/gun/slot/ksg.png", "png");
   writePack("assets/keltec/display/guns/ksg_display.json", JSON.stringify({
     model: "keltec:gun/ksg_geo",
