@@ -4,12 +4,32 @@
 > 用 AI 从零做出一把能被 TACZ（永恒枪械工坊：零）加载的枪，并导出可校验的枪包。
 
 ![TACZ](https://img.shields.io/badge/TACZ-gun%20pack%20studio-orange)
-![Blockbench](https://img.shields.io/badge/Blockbench-5.0%2B-blue)
+![Blockbench](https://img.shields.io/badge/Blockbench-5.2%2B-blue)
 ![DSH](https://img.shields.io/badge/DeepSeek%20Harness-0.2.1--rc.5%2B-purple)
+![License](https://img.shields.io/badge/license-GPL--3.0%20%2B%20MIT-green)
+
+---
+
+## 目录
+
+**上手**
+
+- [这是什么](#这是什么) · [架构一览](#架构一览) · [版本兼容](#版本兼容)
+- [安装](#安装) — [前置要求](#前置要求) · [第 1 步](#第-1-步blockbench-装插件) · [第 2 步](#第-2-步deepseek-harness-装插件) · [第 3 步](#第-3-步接线自动无需手动操作) · [第 4 步](#第-4-步验证) · [排错](#装不上怎么排查)
+
+**使用**
+
+- [功能](#功能) · [怎么用](#怎么用) · [图标规格](#图标规格官方口径)
+
+**参考**
+
+- [目录结构](#目录结构) · [安全说明](#安全说明) · [常见问题](#常见问题)
+- [引用的 API](#引用的-api) · [许可](#许可) · [贡献者](#贡献者) · [致谢](#致谢)
 
 ---
 
 ## 这是什么
+
 
 TACZ 枪包 = 模型 + 贴图 + 图标 + 一堆 JSON。手工做一遍要反复对路径、对字段、对组名，很容易错在细节上。
 
@@ -183,96 +203,6 @@ Blockbench 侧另看：**设置 → 通用** 里应出现 `MCP Host` / `MCP Port
 
 ---
 
-## 引用的 API
-
-**这一节是可核查的清单，不是宣传。** 每一项都能在源码里 grep 到。
-
-### Blockbench 侧（`packages/blockbench-mcp-tacz/`）
-
-上游 fork 自 [jasonjgardner/blockbench-mcp-plugin](https://github.com/jasonjgardner/blockbench-mcp-plugin)。
-完整变更声明见 [`SOURCE.txt`](packages/blockbench-mcp-tacz/SOURCE.txt)（GPL-3.0 §5(a) 要求）。
-
-**调用的 Blockbench API：**
-
-| 类别 | API |
-|---|---|
-| 插件生命周期 | `BBPlugin.register`、`onload` / `onunload` / `oninstall` / `onuninstall` |
-| 设置 | `Settings.get`、`Settings.save`、`Settings.stored`、`Settings.set`（仅 5.0–5.1） |
-| 原生模块权限 | `requireNativeModule("net" \| "fs" \| "process")` |
-| 工程 | `newProject`、`Project`、`Formats`、`Format` |
-| 几何 | `Group`、`Cube`、`Outliner`、`Canvas`、`Texture` |
-| 动画 | `Animation`、`AnimationCodec.codecs.bedrock`、`Animator`、`animator.createKeyframe`、`animator.addToTimeline`、`Keyframe.get/set`（**间接**：设置 `Animation.snapping` 让 Blockbench 内部走 `Timeline.snapTime`，本插件不直接调用它） |
-| 导入导出 | `Codecs.bedrock`、`Blockbench.read`、`Blockbench.writeFile`、`Blockbench.export` |
-| UI | `Setting`、`Panel`、`BarItems`、`Blockbench.addCSS`、`Blockbench.showQuickMessage`、`tl()` |
-| MCP 服务器 | `WebStandardStreamableHTTPServerTransport`（`server/net.ts` 直接 `new` 它）、`McpServer`、`server.getClientVersion`、`oninitialized` |
-
-**对上游的修改（全部）：**
-
-| 项 | 改了什么 |
-|---|---|
-| 新增工具 | `tacz_pack` `tacz_gun` `tacz_ammo` `tacz_attachment` `tacz_icon_render` `tacz_model_validate` `tacz_guide` `tacz_template_list` `tacz_texture_init` |
-| 新增模块 | `lib/tacz/items.ts`、`lib/tacz/model.ts`、`lib/tacz/templates.ts`、`lib/tacz/constants.ts` |
-| `risky_eval` | 默认 `true` → **`false`**，并加一次性迁移关掉旧安装里的 `true` |
-| `mcp_session_timeout` | 默认 `30` → **`1440`** 分钟，并加一次性迁移 |
-| 会话显示 | 从 `getClientVersion()` 取客户端名，面板不再只显示哈希 |
-| `tacz_gun open` | 额外读取 `assets/<ns>/animations/<id>.animation.json` 并导入动画 |
-| 图标渲染 | 支持 flat/iso、目标尺寸、水平翻转 |
-| 枪械模板 | 补 `refit_*_view` 定位组 |
-| 文案 | TACZ 工作流 prompt 与 about 页重写 |
-
-**版本敏感行为**（详见 [`docs/`](docs/)）：
-
-- `Settings.set` 在 5.2 被移除 → `writeSetting()` 回退到 `Settings.stored[id].value` + `Settings.save()`
-- `Timeline.snapTime` 把 `snapping` **clamp 到 1–120** → 导入动画时把 `Animation.snapping` 设为 120（本插件不直接调 `snapTime`，是设 `snapping` 让 Blockbench 内部用它）
-- `createKeyframe` 签名是 **`(values, time, channel, undo, select)`** → 传错参数会静默失败
-
-### 数据侧（`packages/dsh-tacz-gunpack/`）
-
-原创，MIT。**调用的 DSH 插件 API：**
-
-| API | 用途 |
-|---|---|
-| `ctx.tools.register` | 注册 10 个 `tacz_*` 工具 |
-| `ctx.agentPresets.register` | 注册「TACZ 枪包工坊」模式 |
-| `ctx.effect` | 工具随插件卸载自动注销 |
-| `ctx.get` | 读取工作目录、会话等服务 |
-| `ctx.logger` | 日志 |
-
-**不调用**（避免夸大）：`ctx.mcp`、`ctx.plugin`、任何模型 provider 私有接口。
-
----
-
-## 缓存友好与工具披露（现状说明）
-
-网上流传「DeepSeek 有个隐藏参数能极大提升缓存命中」，这个说法需要拆开讲清楚。
-
-**DSH 里真实存在的机制**（在 `app.asar` 里可查）：
-
-| 机制 | 位置 | 说明 |
-|---|---|---|
-| `additional_tools` 消息 | LLM 适配层 | `type: "additional_tools"`、`role: "developer"`，中途新增工具而不重写整个 tools 数组 |
-| `toolUpdate: "addition-only"` | provider 能力表 | 工具更新模式，只有声明支持时才启用 |
-| `supportsAdditionalTools` | provider compat gate | **默认 `withhold`（不启用）**，需 provider 显式声明 |
-| `cache_control` / `ephemeral` | Anthropic 兼容层 | 提示词缓存标记 |
-
-**关键事实：** 本机当前用的是 **`trae` provider**（`dsh-connect-trae@4.6.11`），
-在它的 `lib/index.js` 里搜 `supportsAdditionalTools`、`toolUpdate`、`additional_tools`
-**均为 0 次命中** —— 它没有声明这些能力，所以 DSH 走的是普通工具列表更新，
-**拿不到 `addition-only` 的缓存优势**。
-
-**要真正启用，需要：**
-
-1. provider 在能力表里声明 `supportsAdditionalTools: true`（或 `supportsToolSearch: true`）
-2. 模型侧支持 `developer` 角色的 `additional_tools` 消息
-
-这两条都**不在本插件的控制范围**，属于 provider / 模型能力。本插件不声称能用上它。
-
-> 本插件确实在降低 token 消耗，但靠的是另一件事：**确定性状态机**。
-> `tacz_build` 把进度落盘到 `.tacz/builds/<gun>.json`，会话中断可 `resume`，
-> 不需要把整段历史重新塞进上下文。这比缓存命中更直接。
-
----
-
 ## 功能
 
 ### 数据侧（DeepSeek Harness）
@@ -427,6 +357,65 @@ node tools/merge-bedrock-animation.mjs <model>.bbmodel <id>.animation.json
 
 **配件装不上？**
 需要三样同时存在：`allow_attachment_types`、`allow_attachments` 标签、模型里的 `*_pos` 定位组。
+
+---
+
+## 引用的 API
+
+**这一节是可核查的清单，不是宣传。** 每一项都能在源码里 grep 到。
+
+### Blockbench 侧（`packages/blockbench-mcp-tacz/`）
+
+上游 fork 自 [jasonjgardner/blockbench-mcp-plugin](https://github.com/jasonjgardner/blockbench-mcp-plugin)。
+完整变更声明见 [`SOURCE.txt`](packages/blockbench-mcp-tacz/SOURCE.txt)（GPL-3.0 §5(a) 要求）。
+
+**调用的 Blockbench API：**
+
+| 类别 | API |
+|---|---|
+| 插件生命周期 | `BBPlugin.register`、`onload` / `onunload` / `oninstall` / `onuninstall` |
+| 设置 | `Settings.get`、`Settings.save`、`Settings.stored`、`Settings.set`（仅 5.0–5.1） |
+| 原生模块权限 | `requireNativeModule("net" \| "fs" \| "process")` |
+| 工程 | `newProject`、`Project`、`Formats`、`Format` |
+| 几何 | `Group`、`Cube`、`Outliner`、`Canvas`、`Texture` |
+| 动画 | `Animation`、`AnimationCodec.codecs.bedrock`、`Animator`、`animator.createKeyframe`、`animator.addToTimeline`、`Keyframe.get/set`（**间接**：设置 `Animation.snapping` 让 Blockbench 内部走 `Timeline.snapTime`，本插件不直接调用它） |
+| 导入导出 | `Codecs.bedrock`、`Blockbench.read`、`Blockbench.writeFile`、`Blockbench.export` |
+| UI | `Setting`、`Panel`、`BarItems`、`Blockbench.addCSS`、`Blockbench.showQuickMessage`、`tl()` |
+| MCP 服务器 | `WebStandardStreamableHTTPServerTransport`（`server/net.ts` 直接 `new` 它）、`McpServer`、`server.getClientVersion`、`oninitialized` |
+
+**对上游的修改（全部）：**
+
+| 项 | 改了什么 |
+|---|---|
+| 新增工具 | `tacz_pack` `tacz_gun` `tacz_ammo` `tacz_attachment` `tacz_icon_render` `tacz_model_validate` `tacz_guide` `tacz_template_list` `tacz_texture_init` |
+| 新增模块 | `lib/tacz/items.ts`、`lib/tacz/model.ts`、`lib/tacz/templates.ts`、`lib/tacz/constants.ts` |
+| `risky_eval` | 默认 `true` → **`false`**，并加一次性迁移关掉旧安装里的 `true` |
+| `mcp_session_timeout` | 默认 `30` → **`1440`** 分钟，并加一次性迁移 |
+| 会话显示 | 从 `getClientVersion()` 取客户端名，面板不再只显示哈希 |
+| `tacz_gun open` | 额外读取 `assets/<ns>/animations/<id>.animation.json` 并导入动画 |
+| 图标渲染 | 支持 flat/iso、目标尺寸、水平翻转 |
+| 枪械模板 | 补 `refit_*_view` 定位组 |
+| 文案 | TACZ 工作流 prompt 与 about 页重写 |
+
+**版本敏感行为**（详见 [`docs/`](docs/)）：
+
+- `Settings.set` 在 5.2 被移除 → `writeSetting()` 回退到 `Settings.stored[id].value` + `Settings.save()`
+- `Timeline.snapTime` 把 `snapping` **clamp 到 1–120** → 导入动画时把 `Animation.snapping` 设为 120（本插件不直接调 `snapTime`，是设 `snapping` 让 Blockbench 内部用它）
+- `createKeyframe` 签名是 **`(values, time, channel, undo, select)`** → 传错参数会静默失败
+
+### 数据侧（`packages/dsh-tacz-gunpack/`）
+
+原创，MIT。**调用的 DSH 插件 API：**
+
+| API | 用途 |
+|---|---|
+| `ctx.tools.register` | 注册 10 个 `tacz_*` 工具 |
+| `ctx.agentPresets.register` | 注册「TACZ 枪包工坊」模式 |
+| `ctx.effect` | 工具随插件卸载自动注销 |
+| `ctx.get` | 读取工作目录、会话等服务 |
+| `ctx.logger` | 日志 |
+
+**不调用**（避免夸大）：`ctx.mcp`、`ctx.plugin`、任何模型 provider 私有接口。
 
 ---
 
