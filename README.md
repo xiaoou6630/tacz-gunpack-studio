@@ -44,25 +44,51 @@ TACZ 枪包 = 模型 + 贴图 + 图标 + 一堆 JSON。手工做一遍要反复�
 
 ### 架构一览
 
-```
-┌─────────────────────────┐        ┌─────────────────────────┐
-│  DeepSeek Harness       │        │  Blockbench 5.2+        │
-│  数据侧（MIT）           │        │  美术侧（GPL-3.0）       │
-│                         │        │                         │
-│  tacz_build   构建控制器 │        │  tacz_pack   建包/校验   │
-│  tacz_verify  交叉校验   │        │  tacz_gun    建枪/导出   │
-│  tacz_item    弹药配件   │        │  tacz_ammo   弹药美术    │
-│  tacz_spec    官方基准   │        │  tacz_attachment 配件美术│
-│  tacz_skill   自学习     │        │  tacz_icon_render 图标   │
-│  tacz_reference 参考图   │        │  tacz_model_validate     │
-│                         │        │  tacz_texture_init       │
-│  写 JSON                │        │  写 geo/PNG/bbmodel      │
-└───────────┬─────────────┘        └───────────▲─────────────┘
-            │                                  │
-            │  MCP client  ─── HTTP ─── MCP server
-            │  http://127.0.0.1:3000/bb-mcp
-            ▼                                  │
-     DSH 的 Agent Teams 六个角色 ──────────────┘
+```mermaid
+flowchart TB
+    TEAM["Agent Teams<br/>总监 + 五个角色"]
+    subgraph DSH["DeepSeek Harness · 数据侧 · MIT"]
+        direction TB
+        d1["tacz_build 构建控制器"]
+        d2["tacz_verify 交叉校验"]
+        d3["tacz_item 弹药配件数据"]
+        d4["tacz_spec 官方基准"]
+        d5["tacz_skill 自学习"]
+        d6["tacz_reference 参考图"]
+        d7["产出 JSON<br/>index · data · display · lang"]
+        d1 --> d7
+        d2 --> d7
+        d3 --> d7
+        d4 --> d7
+    end
+
+    subgraph BB["Blockbench 5.2+ · 美术侧 · GPL-3.0"]
+        direction TB
+        b1["tacz_pack 建包 / 校验"]
+        b2["tacz_gun 建枪 / 导出"]
+        b3["tacz_ammo 弹药美术"]
+        b4["tacz_attachment 配件美术"]
+        b5["tacz_icon_render 图标"]
+        b6["tacz_model_validate 自检"]
+        b7["产出 geo · PNG · bbmodel"]
+        b1 --> b7
+        b2 --> b7
+        b3 --> b7
+        b4 --> b7
+        b5 --> b7
+        b6 --> b7
+    end
+
+    MCP{{"本地 HTTP MCP<br/>127.0.0.1:3000/bb-mcp"}}
+
+    TEAM --> DSH
+    DSH -- "MCP client 请求" --> MCP
+    MCP -- "streamable-http" --> BB
+
+    style DSH fill:#1e3a5f,color:#fff
+    style BB fill:#3d2b1f,color:#fff
+    style MCP fill:#2d4a3e,color:#fff
+    style TEAM fill:#3a2d4a,color:#fff
 ```
 
 - **DSH 是 MCP client，Blockbench 是 MCP server**，走 `streamable-http`。

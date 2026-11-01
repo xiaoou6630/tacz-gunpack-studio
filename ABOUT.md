@@ -18,22 +18,30 @@ TACZ 枪包的门槛不在建模，而在**细节一致性**：
 
 ## 怎么工作的
 
-```
-你提需求
-   ↓
-总监（Director）：问清缺口径/型号/动画 → 建任务 → 派活 → 卡阶段 → 交付
-   ↓
-┌─────────────┬──────────────┬─────────────┬──────────────┬─────────────┐
-│ researcher  │   modeler    │ data-smith  │   reviewer   │   learner   │
-│ 参考图/参数  │  骨骼/几何   │  index/data │   只读审核    │  提炼经验    │
-│             │  UV/贴图/图标 │  display/lang│             │  改写技能    │
-└─────────────┴──────────────┴─────────────┴──────────────┴─────────────┘
-   ↓                    ↓             ↓
-Blockbench MCP    几何/UV/图标     JSON 文档
-   ↓                    ↓             ↓
-        └──────── 构建控制器 tacz_build ────────┘
-                          ↓
-                  校验 → 打包 → 你实机验收 → DONE
+```mermaid
+flowchart TB
+    U["你提需求"] --> D["总监 Director<br/>问清口径 / 型号 / 动画<br/>建任务 · 派活 · 卡阶段 · 交付"]
+
+    D --> R["researcher<br/>参考图 / 参数"]
+    D --> M["modeler<br/>骨骼 / 几何 / UV / 贴图 / 图标"]
+    D --> S["data-smith<br/>index / data / display / lang"]
+    D --> V["reviewer<br/>只读审核"]
+    D --> L["learner<br/>提炼经验 · 改写技能"]
+
+    R --> BB["Blockbench MCP<br/>产出 geo / PNG"]
+    M --> BB
+    S --> J["JSON 文档"]
+
+    BB --> B["tacz_build 构建控制器"]
+    J --> B
+    V --> B
+
+    B --> C["交叉校验"] --> P["打包 zip"] --> H["你实机验收"] --> DONE["DONE"]
+
+    style D fill:#3a2d4a,color:#fff
+    style B fill:#2d4a3e,color:#fff
+    style H fill:#5f3a1e,color:#fff
+    style DONE fill:#1e5f2d,color:#fff
 ```
 
 关键设计：
