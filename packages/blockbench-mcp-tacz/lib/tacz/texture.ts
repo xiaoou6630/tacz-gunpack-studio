@@ -19,17 +19,37 @@ export interface IAtlasResult {
   faces: number;
   cubes: number;
   empty_faces: number;
+  /** Cubes whose name carried no part information, so the material was guessed. */
+  unnamed_cubes: number;
 }
 
-/** Chooses a default material from a template cube name. */
-export function materialForName(name: string): string {
+/**
+ * Chooses a default material from a template cube name.
+ *
+ * Bedrock geometry has no `name` field for cubes, so a project reopened from
+ * `*_geo.json` names every cube after its bone — usually `AKM`. That name
+ * matches none of the rules below and used to fall through to plain `steel`,
+ * turning the whole gun one flat grey. The fallback now varies by cube index
+ * so neighbouring parts at least differ, and callers are told when the name
+ * carried no information.
+ */
+export function materialForName(name: string, index = 0): string {
   const lower = name.toLowerCase();
   if (/(stock|wood|handguard|grip)/.test(lower)) return lower.includes("grip") ? "polymer" : "wood";
   if (/(mag|bolt|barrel|muzzle|receiver|tube|steel)/.test(lower)) return lower.includes("muzzle") || lower.includes("mag") ? "steel_dark" : "steel";
   if (/(sight|scope|rail)/.test(lower)) return "steel_dark";
   if (/(glass|lens)/.test(lower)) return "glass";
   if (/(accent|warhead|tip)/.test(lower)) return "accent";
-  return "steel";
+  // A bone name (`AKM`, `root`, `bone2`) says nothing about the part. Spread
+  // the four structural materials so the blockout is still readable.
+  const fallback = ["steel", "steel_dark", "polymer", "wood"];
+  return fallback[index % fallback.length];
+}
+
+/** True when a cube name carries part information rather than just a bone name. */
+export function hasPartName(name: string): boolean {
+  const lower = name.toLowerCase();
+  return /(stock|wood|handguard|grip|mag|bolt|barrel|muzzle|receiver|tube|sight|scope|rail|glass|lens|accent|trigger|hammer|safety|pump)/.test(lower);
 }
 
 /** Returns the project texture, creating one if the project has none. */
@@ -95,13 +115,30 @@ export function initializeAtlas(options: { size: [number, number]; palette?: Rec
   Project.texture_width = options.size[0];
   Project.texture_height = options.size[1];
   for (const cube of Cube.all) {
+    // Box UV squeezes all six faces of a cube into one small net, so a whole
+    // gun covers only a sliver of the atlas (measured: 9% coverage on a 96-cube
+    // model, against 74-100% for the hand-authored DP-12 and KSG). Per-face UV
+    // lets Auto UV spread the faces across the atlas, which is what makes
+    // shading and detail possible later.
+    if (cube.box_uv && Format?.optional_box_uv) {
+      try {
+        // Blockbench's own dialog uses setUVMode(false) for "Switch to Per-face UV".
+        (cube as unknown as { setUVMode?: (box: boolean) => void }).setUVMode?.(false);
+      } catch {
+        // Some formats refuse the conversion; keep the box UV rather than fail.
+      }
+    }
     cube.applyTexture(texture, true);
     cube.mapAutoUV();
   }
   let faces = 0;
   let empty = 0;
+  let unnamed = 0;
+  let index = 0;
   for (const cube of Cube.all) {
-    const material = materialForName(cube.name);
+    if (!hasPartName(cube.name)) unnamed += 1;
+    const material = materialForName(cube.name, index);
+    index += 1;
     const color = palette[material] ?? palette.steel;
     for (const face of Object.values(cube.faces)) {
       const uv = face.uv as unknown as readonly number[] | undefined;
@@ -113,5 +150,5 @@ export function initializeAtlas(options: { size: [number, number]; palette?: Rec
   texture.updateLayerChanges(true);
   texture.select();
   Canvas.updateAll();
-  return { texture: texture.name, size: [options.size[0], options.size[1]], faces, cubes: Cube.all.length, empty_faces: empty };
+  return { texture: texture.name, size: [options.size[0], options.size[1]], faces, cubes: Cube.all.length, empty_faces: empty, unnamed_cubes: unnamed };
 }
