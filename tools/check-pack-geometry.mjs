@@ -115,6 +115,111 @@ for (const [bone, list] of byBone) {
 }
 advise(floating === 0, "connected", floating === 0 ? "every bone's cubes form one piece" : `${floating} bone(s) contain floating parts`);
 
+// A near-miss gap reads as a seam the player can see through. Only parts on
+// DIFFERENT bones count: neighbouring cubes on one bone are meant to abut, so
+// a 0.05-unit step there is a detail, not a break. nagant_m1895 has a real one —
+// the barrel stops at Z -5.30 and the underlug starts at -5.10.
+const SEAM_MIN = 0.05;
+const SEAM_MAX = 0.5;
+let seams = 0;
+const seamSamples = [];
+for (let i = 0; i < boxes.length; i++) {
+  for (let j = i + 1; j < boxes.length; j++) {
+    if (cubes[i].bone === cubes[j].bone) continue;
+    const a = boxes[i];
+    const b = boxes[j];
+    // Overlap on two axes and a small gap on the third.
+    const gaps = [
+      { g: Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1)), oy: Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0), oz: Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0) },
+      { g: Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1)), oy: Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), oz: Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0) },
+      { g: Math.max(0, Math.max(a.z0, b.z0) - Math.min(a.z1, b.z1)), oy: Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), oz: Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) },
+    ];
+    for (const { g, oy, oz } of gaps) {
+      // Both other axes must overlap substantially, otherwise it is a diagonal
+      // offset rather than a seam.
+      if (g >= SEAM_MIN && g <= SEAM_MAX && oy > 0.3 && oz > 0.3) {
+        seams++;
+        if (seamSamples.length < 3) seamSamples.push(`${cubes[i].bone}↔${cubes[j].bone} ${g.toFixed(2)}u`);
+        break;
+      }
+    }
+  }
+}
+advise(seams === 0, "seam_gaps", seams === 0 ? "no near-miss gaps between parts" : `${seams} part pair(s) stop 0.05–0.5u apart and will read as detached (${seamSamples.join("; ")})`);
+
+// A part built by slicing one slab into many offset layers produces a staircase.
+// Real parts are one continuous shape or a few rotated blocks. nagant_m1895 has
+// 14 grip_core layers: each is 1.607u deep but shifted only 0.109u on Z, so 93%
+// of every layer is buried and the exposed surface reads as steps.
+//
+// The tell is a slice whose shift along the stacking axis is small compared with
+// its own extent on that axis. Comparing the shift to the slice's *height* is
+// wrong: grip_core shifts 0.109 against a 0.336 height, a ratio of 0.32, which
+// slips past any threshold tight enough to be useful.
+const prefixes = new Map();
+for (const cube of cubes) {
+  const match = /^([a-z0-9_]+)_(\d{2,})$/.exec(cube.name ?? "");
+  if (!match) continue;
+  if (!prefixes.has(match[1])) prefixes.set(match[1], []);
+  prefixes.get(match[1]).push(cube);
+}
+const staircases = [];
+for (const [prefix, list] of prefixes) {
+  if (list.length < 8) continue;
+  const sorted = list.slice().sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+
+  // The stacking axis is the one where consecutive layers are flush: each layer
+  // starts where the previous ends. The other axes are where the staircase
+  // actually shows, because each layer is shifted sideways by a fraction of
+  // its own length.
+  const axes = [0, 1, 2].map(idx => {
+    const values = sorted.map(c => c.origin?.[idx] ?? 0);
+    const range = Math.max(...values) - Math.min(...values);
+    // Is this axis a clean stack? Layers may run in either direction, so compare
+    // the near and far faces of each pair rather than assuming ascending order.
+    const flush = sorted.every((c, i) => {
+      if (i === 0) return true;
+      const a = sorted[i - 1];
+      const aLo = Math.min(a.origin?.[idx] ?? 0, (a.origin?.[idx] ?? 0) + (a.size?.[idx] ?? 0));
+      const aHi = Math.max(a.origin?.[idx] ?? 0, (a.origin?.[idx] ?? 0) + (a.size?.[idx] ?? 0));
+      const bLo = Math.min(c.origin?.[idx] ?? 0, (c.origin?.[idx] ?? 0) + (c.size?.[idx] ?? 0));
+      const bHi = Math.max(c.origin?.[idx] ?? 0, (c.origin?.[idx] ?? 0) + (c.size?.[idx] ?? 0));
+      // Abutting means one ends exactly where the other begins.
+      return Math.abs(aHi - bLo) < 0.05 || Math.abs(bHi - aLo) < 0.05;
+    });
+    return { idx, range, flush };
+  });
+  const stackAxis = axes.find(a => a.flush && a.range > 0);
+  if (!stackAxis) continue;
+
+  // On the remaining axes, how far does each layer step sideways compared with
+  // its own length there?
+  let worstRatio = 1;
+  let worstAxis = null;
+  for (const other of axes) {
+    if (other.idx === stackAxis.idx) continue;
+    const shifts = [];
+    const extents = [];
+    for (let i = 1; i < sorted.length; i++) {
+      shifts.push(Math.abs((sorted[i].origin?.[other.idx] ?? 0) - (sorted[i - 1].origin?.[other.idx] ?? 0)));
+      extents.push(Math.abs(sorted[i].size?.[other.idx] ?? 0));
+    }
+    const avgShift = shifts.reduce((s, v) => s + v, 0) / shifts.length;
+    const avgExtent = extents.reduce((s, v) => s + v, 0) / extents.length;
+    if (avgShift > 0.01 && avgExtent > 0) {
+      const ratio = avgShift / avgExtent;
+      if (ratio < worstRatio) {
+        worstRatio = ratio;
+        worstAxis = { axis: ["x", "y", "z"][other.idx], avgShift, avgExtent };
+      }
+    }
+  }
+  if (worstAxis && worstRatio < 0.5) {
+    staircases.push(`${prefix} (${sorted.length} layers stepped ${worstAxis.avgShift.toFixed(3)}u on ${worstAxis.axis} against a ${worstAxis.avgExtent.toFixed(2)}u slice, ${Math.round(worstRatio * 100)}% exposed)`);
+  }
+}
+advise(staircases.length === 0, "staircase", staircases.length === 0 ? "no sliced-layer parts" : `${staircases.length} part(s) built by slicing one slab into offset layers: ${staircases.join("; ")}`);
+
 // ---------------------------------------------------------------- texture
 const png = decodePng(uvPath);
 console.log("");
@@ -155,6 +260,81 @@ report(outOfBounds === 0, "uv_bounds", outOfBounds === 0 ? `all inside ${atlasWi
 const usedHeight = maxV / atlasHeight * 100;
 const usedWidth = maxU / atlasWidth * 100;
 advise(usedHeight >= 85, "uv_fill", `UVs reach ${Math.round(usedHeight)}% of the atlas height and ${Math.round(usedWidth)}% of its width (${Math.round(100 - usedHeight)}% of the height unused)`);
+
+// ---------------------------------------------------------------- animation
+// A reload that pops rounds into existence without moving them in from outside
+// reads as magic. nagant_m1895's reload_empty drives round_1 with scale 0 → 1
+// between t=6.02 and t=6.07 and no position path from the loading gate, so the
+// rounds appear rather than get loaded.
+const animPath = path.join(packDir, "assets", ns, "animations", `${gunId}.animation.json`);
+if (fs.existsSync(animPath)) {
+  const anim = JSON.parse(fs.readFileSync(animPath, "utf8"));
+  const clips = anim.animations ?? {};
+  console.log("");
+  console.log(`animation: ${path.relative(packDir, animPath)}`);
+
+  /** Reads a channel's keyframe map into [time, value] pairs. */
+  const keyframes = (channel) => {
+    if (!channel) return [];
+    if (Array.isArray(channel)) return [[0, channel]];
+    return Object.entries(channel)
+      .map(([t, v]) => [Number(t), Array.isArray(v) ? v : v.post ?? v.pre ?? [0, 0, 0]])
+      .sort((a, b) => a[0] - b[0]);
+  };
+
+  const popIns = [];
+  const reloadClips = Object.entries(clips).filter(([name]) => /reload/i.test(name));
+  // The gun's body bounds, so "outside" can be judged.
+  const bodyMinZ = Math.min(...boxes.map(b => b.z0));
+  const bodyMaxZ = Math.max(...boxes.map(b => b.z1));
+  const bodyMaxY = Math.max(...boxes.map(b => b.y1));
+  for (const [clipName, clip] of Object.entries(clips)) {
+    for (const [bone, channels] of Object.entries(clip.bones ?? {})) {
+      // Only parts that are plausibly ammunition.
+      if (!/round|bullet|shell|cartridge|ammo/i.test(bone)) continue;
+      const scale = keyframes(channels.scale);
+      if (scale.length < 2) continue;
+      // The moment a part becomes visible.
+      const appear = scale.find(([, v]) => v.every(n => n >= 0.99));
+      if (!appear) continue;
+      const wasHidden = scale.some(([t, v]) => t < appear[0] && v.every(n => n === 0));
+      if (!wasHidden) continue;
+
+      const position = keyframes(channels.position);
+      const atAppear = position.filter(([t]) => t <= appear[0]).pop()?.[1] ?? [0, 0, 0];
+
+      // Where does ammunition have to come from? For a gate-loaded revolver the
+      // gate sits on the side of the frame, so a loaded round arrives from
+      // outside the body along X. nagant_m1895's loading gate spans X ≈ -1.16
+      // while its rounds appear at X offset -0.31 — straight above the cylinder,
+      // nowhere near the gate. They scale into existence in place.
+      const gateCubes = cubes.filter(c => /gate|loading/i.test(c.name ?? ""));
+      const gateX = gateCubes.length
+        ? gateCubes.reduce((s, c) => s + (c.origin?.[0] ?? 0), 0) / gateCubes.length
+        : null;
+
+      if (gateX !== null) {
+        // The round must start on the gate side and move toward the centre.
+        const startsAtGate = Math.abs(atAppear[0]) > Math.abs(gateX) * 0.5;
+        const movesInward = position.some(([, v]) => Math.abs(v[0]) < Math.abs(atAppear[0]) - 0.2);
+        if (!startsAtGate || !movesInward) {
+          popIns.push(`${clipName}/${bone} appears at x=${atAppear[0].toFixed(2)} while the gate is at x=${gateX.toFixed(2)}`);
+        }
+      }
+    }
+  }
+  advise(popIns.length === 0, "ammo_load_path", popIns.length === 0 ? "reload clips move ammunition into place" : `${popIns.length} part(s) become visible already inside the gun and never travel in, so the rounds appear instead of load (${popIns.slice(0, 3).join("; ")})`);
+
+  // Every reload clip should involve at least one ammunition part — but only
+  // when the model actually has ammunition parts to animate. A shotgun loads
+  // shells the player holds, not rounds modelled inside the gun, and KSG ships
+  // with no round bones at all, so a missing one here is not a defect.
+  const hasAmmoBones = cubes.some(c => /round|bullet|shell|cartridge|ammo/i.test(c.name ?? ""));
+  if (hasAmmoBones) {
+    const emptyReloads = reloadClips.filter(([, clip]) => !Object.keys(clip.bones ?? {}).some(b => /round|bullet|shell|cartridge|ammo/i.test(b)));
+    advise(emptyReloads.length === 0, "reload_has_ammo", emptyReloads.length === 0 ? "every reload clip animates ammunition" : `${emptyReloads.length} reload clip(s) never touch an ammunition part: ${emptyReloads.map(([n]) => n).join(", ")}`);
+  }
+}
 
 // ---------------------------------------------------------------- verdict
 console.log("");
