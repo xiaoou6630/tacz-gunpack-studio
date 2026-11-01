@@ -63,6 +63,18 @@ report(true, "cubes", `${cubes.length} (official high-poly: 273-761)`);
 report(cubes.length >= 120, "cube_count", `${cubes.length} cubes; below 120 is LOD-grade`);
 console.log(`  note  atlas is ${atlasWidth}x${atlasHeight}`);
 
+// lefthand_pos and righthand_pos are not empty anchors: TACZ places the player's
+// arms from the geometry inside them. Official m1911 and deagle each put a
+// 3x12x4 hand cube there. An empty pair makes the gun float in front of the
+// camera with no hands and the wrong angle — how nagant_m1895 shipped, with an
+// X extent of 2.25 against the official pistols' 13-14.
+const handBones = ["lefthand_pos", "righthand_pos"];
+const emptyHands = handBones.filter(name => {
+  const bone = (geo.bones ?? []).find(b => b.name === name);
+  return !bone || (bone.cubes ?? []).length === 0;
+});
+report(emptyHands.length === 0, "hand_anchors", emptyHands.length === 0 ? "both hand anchors carry a hand cube" : `${emptyHands.join(" and ")} hold no geometry, so the arms cannot be positioned and the gun will float`);
+
 /** Axis-aligned box from origin+size. */
 function box(cube) {
   const [ox, oy, oz] = cube.origin;
