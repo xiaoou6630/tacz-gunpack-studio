@@ -196,6 +196,12 @@ export function importBedrockAnimations(text: string): string[] {
     const animation = new Animation({
       name: `animation.${clipName}`,
       loop: clip.loop === true ? "loop" : "once",
+      // Blockbench clamps `snapping` to 1..120 and routes both import and
+      // export through `Timeline.snapTime`, which rounds to `1/snapping`.
+      // The stock default of 10 rounds TaCZ times onto a 0.1 grid (0.05 and
+      // 0.12 collapse), so use the finest value the clamp allows; 120 is also
+      // a multiple of 24, the coarsest step TaCZ itself writes.
+      snapping: 120,
       length: typeof clip.animation_length === "number" ? clip.animation_length : 0,
     });
     for (const [boneName, channels] of Object.entries(clip.bones ?? {})) {
@@ -217,11 +223,17 @@ export function importBedrockAnimations(text: string): string[] {
             ? [[0, flip(value as number[])]]
             : Object.entries(value as Record<string, number[]>).map(([time, point]) => [Number(time), flip(point)]);
         for (const [time, point] of points) {
-          const keyframe = animator.createKeyframe(channel, time);
+          // createKeyframe(values, time, channel, undo, select) — the channel
+          // is the THIRD argument; passing it first silently creates nothing.
+          const keyframe = animator.createKeyframe(null, time, channel, false, false);
           if (!keyframe) continue;
-          keyframe.set(0, point[0]);
-          keyframe.set(1, point[1]);
-          keyframe.set(2, point[2]);
+          // createKeyframe snaps the time onto the timeline grid, which would
+          // shift a TaCZ clip. Put the exact source time back.
+          keyframe.time = time;
+          // Keyframe.set/get take axis letters, not 0/1/2 indices.
+          keyframe.set("x", point[0]);
+          keyframe.set("y", point[1]);
+          keyframe.set("z", point[2]);
         }
       }
     }

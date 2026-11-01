@@ -4,6 +4,51 @@
 
 > 官方基准怎么找：本地优先（`TACZ_SOURCE`、`vendor/TACZ`、工作目录、缓存），全落空才用 `tacz_spec` 从官方 GitHub `MCModderAnchor/TACZ@1.20.1` 取。详见 [tacz-baseline-source.md](tacz-baseline-source.md)。
 
+## 0. 同一份动画能不能两边通用
+
+**能。** TaCZ 与 Blockbench 用的都是 Bedrock 动画格式，`tacz_gun action="open"` 会把
+`assets/<ns>/animations/<id>.animation.json` 读进工程，Blockbench 的
+`AnimationCodec.codecs.bedrock.compileFile()` 又能把它写回同一种文件。
+
+两边只有三处约定不同，都是可逆的：
+
+| | TaCZ / Bedrock 文件 | Blockbench 工程内 |
+|---|---|---|
+| 片段名 | `static_idle` | `animation.static_idle`（导出时去掉前缀） |
+| rotation | 原值 | **x、y 取反**（导出时再取反，抵消） |
+| position | 原值 | **x 取反**（同上抵消） |
+
+实测（KSG，12 段 / 89 通道 / 198 个关键帧）往返后：
+
+- 所有骨骼的 rotation / position 数值**逐值一致**
+- 片段名、`loop`、`animation_length` 一致
+- 时间轴**只剩 1/120 秒量级的取整**（见下）
+
+### 两个已知的等价差异，不影响播放
+
+**1. `scale: [1,1,1]` 导出时被省略。**
+Blockbench 视 `[1,1,1]` 为默认值，不写进文件。Bedrock 里缺省即 1，所以语义相同。
+
+**2. 时间被吸附到 1/120 秒网格。**
+Blockbench 的 `Timeline.snapTime` 实现是：
+
+```js
+snapTime(i, e) {
+  var t = Math.clamp(e ? e.snapping : settings.animation_snap.value, 1, 120);
+  return Math.clamp(Math.round(i * t) / t, 0);
+}
+```
+
+**`snapping` 被硬性 clamp 在 1–120**，所以最细网格是 1/120 秒。
+TaCZ 的 `0.12` 这类值不在网格上，往返后变成 `0.1167`，误差 **3.33 毫秒**，
+约为 24fps 一帧的 8%。
+
+本插件的导入把 `snapping` 设为 **120**（上限），把误差压到最小；Blockbench 的默认值 10
+会把 `0.05`/`0.12`/`0.45` 全部collapse 到 0.1 网格，误差大一个数量级。
+
+> 想让时间**完全无损**，就别在 Blockbench 里导出动画：游戏侧直接分发原始
+> `*.animation.json`，只在 Blockbench 里做可视化和微调。
+
 ## 1. display 里要写什么
 
 ```json

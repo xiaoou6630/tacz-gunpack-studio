@@ -82,6 +82,11 @@ const IMPORTER =
   'for(const clipName of Object.keys(clips)){' +
   'const clip=clips[clipName]||{};' +
   'const anim=new Animation({name:"animation."+clipName,loop:clip.loop===!0?"loop":"once",' +
+  // snapping is ticks per second and drives Timeline.snapTime on both import
+  // and export. Blockbench's default 10 rounds 0.05/0.12/0.45 onto a 0.1 grid
+  // and 24 rounds them onto 1/24, so a TaCZ clip comes back with different
+  // times. 120 is a multiple of 24 and fine enough for every value TaCZ ships.
+  'snapping:120,' +
   'length:typeof clip.animation_length==="number"?clip.animation_length:0});' +
   'const bones=clip.bones||{};' +
   'anim.add();anim.select();' +
@@ -97,7 +102,11 @@ const IMPORTER =
   'for(const pair of points){' +
   'const time=pair[0],point=pair[1];' +
   'const kf=animator.createKeyframe(null,time,channel,!1,!1);if(!kf)continue;' +
-  'kf.set(0,point[0]);kf.set(1,point[1]);kf.set(2,point[2])}' +
+  // createKeyframe snaps time to the timeline grid (0.9 -> 0.9167 at 24fps),
+  // which corrupts a TaCZ clip's timing. Restore the exact source time.
+  'kf.time=time;' +
+  // Keyframe.get/set take an axis letter ("x"/"y"/"z"), not a 0/1/2 index.
+  'kf.set("x",point[0]);kf.set("y",point[1]);kf.set("z",point[2])}' +
   'if(typeof animator.addToTimeline==="function")animator.addToTimeline()}' +
   '}' +
   'anim.add();' +
