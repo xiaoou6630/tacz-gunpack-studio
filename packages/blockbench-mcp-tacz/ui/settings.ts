@@ -60,7 +60,12 @@ export function settingsSetup() {
       name: tl("mcp.settings.session_timeout_name"),
       description: tl("mcp.settings.session_timeout_desc"),
       type: "number",
-      value: 30,
+      // Upstream defaults to 30 minutes. The DeepSeek Harness MCP client has
+      // no session-recovery path (no 404 handling, no reconnect), so an idle
+      // disconnect leaves it permanently broken until DSH itself restarts.
+      // Default to the maximum instead: an idle session costs almost nothing
+      // and surviving a long pause is worth far more here.
+      value: 1440,
       min: 1,
       max: 1440,
       category,
@@ -114,6 +119,46 @@ export function settingsSetup() {
   // actually closes the hole. The user can still turn it on afterwards — the
   // marker records that we already did this, so we never fight the user.
   enforceRiskyEvalOff();
+
+  // Same shape of problem for the session timeout: existing installs stored
+  // the upstream 30-minute default, so raising the default alone would not
+  // help anyone who already ran the plugin once.
+  raiseSessionTimeout();
+}
+
+/**
+ * One-time migration: lift `mcp_session_timeout` off the upstream 30 minutes.
+ *
+ * The DeepSeek Harness MCP client never recovers from a lost session (no 404
+ * handling, no reconnect), so an idle disconnect leaves it broken until DSH
+ * restarts. 24 hours is the setting's maximum and costs nothing while idle.
+ *
+ * Only touches the value when it is still at or below the old default, so a
+ * user who deliberately chose something else is left alone.
+ */
+function raiseSessionTimeout(): void {
+  if (typeof Settings === "undefined") return;
+  const marker = "mcp_session_timeout_raised";
+  if (Settings.get(marker) === true) return;
+  const current = Number(Settings.get("mcp_session_timeout"));
+  if (Number.isFinite(current) && current > 30) {
+    // The user already chose something larger; record that we looked.
+    writeSetting(marker, true);
+    return;
+  }
+  // Writing `Settings.stored[id].value` only changes the SAVED value; the live
+  // Setting object keeps its old `value`, and `Settings.get()` (plus the
+  // Settings dialog) reads that one. On the next save the live value overwrites
+  // `stored` again, so mutate the object that `settingsSetup()` created.
+  const live = settings.find(setting => setting?.id === "mcp_session_timeout") as
+    | { value: number }
+    | undefined;
+  if (live) {
+    live.value = 1440;
+    Settings.save?.();
+    console.info("[mcp] session timeout raised to 1440 minutes; DSH cannot recover a lost MCP session on its own.");
+  }
+  writeSetting(marker, true);
 }
 
 /**
