@@ -15,7 +15,12 @@ whenToUse: Use when a TACZ design brief needs a rig, geometry, UVs, texture, ico
 ## Procedure
 
 1. Read the existing pack and `refs/<slug>/design-brief.json`; the Lead owns `tacz_pack create` / `tacz_gun new`. Do not create a second pack.
-2. Write `models/<gun>-blueprint.json` first: `parts` (name/bone/cubes) and `bones` (name/parent/pivot). Return after the `BLUEPRINT` gate; do not start cubes before it passes.
+2. Write `models/<gun>-blueprint.json` first. It is a **work order, not a model**:
+   - `parts[]`: `name`, `bone`, optional `description` (proportions, real dimensions), and **`cubes: []` — always empty**.
+   - `bones[]`: `name`, `parent`, `pivot`.
+   - The `BLUEPRINT` gate only checks that `parts` and `bones` are non-empty arrays.
+   - **Never write cube geometry into the blueprint.** `from`/`to`/`size` arrays there are not modelling; nothing reads them, and they are not a substitute for building in Blockbench. Geometry is created in Blockbench in step 5, and only there.
+   Return after the `BLUEPRINT` gate; do not start cubes before it passes.
 3. Read `tacz_template_list` for category defaults. Keep `camera`, `root`, `AKM`, `positioning`, `views`, and locator groups.
 4. **Rig first** — create the bones that must move: bolt, magazine, safety, trigger, pump, barrels, hammer. Each moving part gets its own bone; pivots sit at the real rotation point. Keep `lefthand` / `righthand` / `camera` / `constraint` groups.
 5. **Blockout** in this order: receiver → barrel/handguard → stock → grip → magazine → sights → muzzle. Batch cubes: one `place_cube` call with multiple elements per pass, not one cube per step.
