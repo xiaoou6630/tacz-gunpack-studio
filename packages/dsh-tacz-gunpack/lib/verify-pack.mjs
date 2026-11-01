@@ -128,10 +128,23 @@ export function verifyPack(packDir) {
       const ref = splitRef(data[key]);
       if (!ref) continue;
       checked++;
-      if (key === "display") checkFile(root, ref.namespace, `display/guns/${ref.target}.json`, `${file} display`, errors);
-      else {
-        const rel = `data/${ref.namespace}/data/guns/${path.basename(ref.target)}.json`;
-        if (!fs.existsSync(path.join(root, ...rel.split("/")))) errors.push(`${file} data: missing ${rel}`);
+      if (key === "display") {
+        // A display target can live in display/guns, display/ammo or
+        // display/attachments. The official pack keeps ammunition under
+        // display/ammo and attachments under display/attachments, so checking
+        // only display/guns reported a correct pack as broken.
+        const candidates = ["guns", "ammo", "attachments"].map(
+          kind => `display/${kind}/${ref.target}.json`,
+        );
+        const found = candidates.find(rel => fs.existsSync(path.join(root, "assets", ref.namespace, ...rel.split("/"))));
+        if (!found) {
+          errors.push(`${file} display: missing assets/${ref.namespace}/{${candidates.join("|")}}`);
+        }
+      } else {
+        // `data` targets are guns, ammo or attachments; try each data folder.
+        const dirs = ["guns", "ammo", "attachments"];
+        const found = dirs.some(kind => fs.existsSync(path.join(root, "data", ref.namespace, "data", kind, `${path.basename(ref.target)}.json`)));
+        if (!found) errors.push(`${file} data: missing data/${ref.namespace}/data/{guns|ammo|attachments}/${path.basename(ref.target)}.json`);
       }
     }
   }
