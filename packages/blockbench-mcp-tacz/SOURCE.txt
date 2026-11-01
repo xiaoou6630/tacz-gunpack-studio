@@ -1,19 +1,61 @@
-blockbench-mcp 1.10.1-tacz.1
+blockbench-mcp 1.10.1-tacz.2
 
 License: GPL-3.0-only (see ../../LICENSES/GPL-3.0.txt)
 Upstream: https://github.com/jasonjgardner/blockbench-mcp-plugin
 Original author: Jason J. Gardner
 Fork: https://github.com/xiaoou6630/tacz-gunpack-studio
-Fork commit: 211c6afc2b556c6bb29b671bd0de356f8ecb076d
 
-Changes made in this fork:
-- added TACZ gun-pack tools: tacz_pack, tacz_gun, tacz_ammo, tacz_attachment,
-  tacz_icon_render, tacz_model_validate, tacz_guide, tacz_template_list,
-  tacz_texture_init
-- added TACZ ammo/attachment art support (lib/tacz/items.ts)
-- added flat/iso icon rendering with target size and flip support
-- added refit_*_view locator groups to gun templates
-- changed the risky_eval setting default from true to false
-- rewrote the TACZ workflow prompt and about page
+Changes made in this fork
+=========================
+
+Added TACZ gun-pack tools (new files, not present upstream):
+- tacz_pack, tacz_gun, tacz_ammo, tacz_attachment, tacz_icon_render,
+  tacz_model_validate, tacz_guide, tacz_template_list, tacz_texture_init
+- lib/tacz/items.ts (ammo/attachment art), lib/tacz/model.ts,
+  lib/tacz/templates.ts, lib/tacz/constants.ts
+
+Modified upstream behaviour:
+- risky_eval: default changed from true to false, plus a one-time migration that
+  closes it on installs which saved true under an older build.
+- mcp_session_timeout: default changed from 30 to 1440 minutes, plus a one-time
+  migration for installs still on the old default.
+- MCP client name: captured from the SDK's getClientVersion() during
+  initialize, so the session panel shows the client instead of a bare hash.
+- tacz_gun action="open": also reads assets/<ns>/animations/<id>.animation.json
+  and imports the clips. The axis convention is taken from Blockbench's own
+  compileBedrockKeyframe: rotation negates x and y, position negates x.
+- Icon rendering: flat/iso output with target size and horizontal flip.
+- Gun templates: refit_*_view locator groups added.
+- TACZ workflow prompt and about page rewritten.
+
+Blockbench APIs this fork calls (all verified on 5.2.2)
+=======================================================
+Plugin lifecycle   BBPlugin.register, onload, onunload, oninstall, onuninstall
+Settings           Settings.get, Settings.save, Settings.stored,
+                   Settings.set (5.0-5.1 only; absent in 5.2+)
+Permissions        requireNativeModule("net" | "fs" | "process")
+Project            newProject, Project, Formats, Format
+Geometry           Group, Cube, Outliner, Canvas, Texture
+Animation          Animation, AnimationCodec.codecs.bedrock, Animator,
+                   Timeline.snapTime, animator.createKeyframe,
+                   animator.addToTimeline, Keyframe.get/set ("x"/"y"/"z")
+Export / IO        Codecs.bedrock, Blockbench.read, Blockbench.writeFile,
+                   Blockbench.export
+UI                 Setting, Panel, BarItems, Blockbench.addCSS,
+                   Blockbench.showQuickMessage, tl()
+MCP server         WebStandardStreamableHTTPServerTransport (MCP SDK),
+                   McpServer, server.getClientVersion, oninitialized
+
+Version-sensitive behaviour (see ../../docs/ for detail):
+- Settings.set is gone in 5.2; writeSetting() falls back to
+  Settings.stored[id].value + Settings.save().
+- Timeline.snapTime clamps `snapping` to 1..120, so imported clips use 120.
+- createKeyframe signature is (values, time, channel, undo, select); passing the
+  channel first silently creates nothing.
 
 Rebuild from source: bun install --ignore-scripts && bun run build
+
+This shipped bundle was produced by patching dist/mcp.js in place because Bun
+was unavailable on the build machine. tools/patch-dist.mjs reproduces every
+change, and tools/verify-dist-syntax.mjs gates it with new Function() (which
+catches errors `node --check` accepts).
