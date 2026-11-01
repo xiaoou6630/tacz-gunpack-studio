@@ -65,9 +65,12 @@ tacz_build action="ack" gun_id=ksg confirmed=true note="in-game ok"
 {
   "gun_id": "ksg",
   "parts": [
-    { "name": "receiver", "bone": "receiver", "cubes": [
-      { "from": [-2, 4, -8], "to": [2, 6, 8], "uv": [0, 0] }
-    ] }
+    {
+      "name": "receiver",
+      "bone": "receiver",
+      "cubes": [],
+      "description": "黑色低饱和蓝灰机匣，Z≈-2.0..+6.25，宽约 ±1.625"
+    }
   ],
   "bones": [
     { "name": "root", "parent": null, "pivot": [0, 0, 0] },
@@ -79,7 +82,9 @@ tacz_build action="ack" gun_id=ksg confirmed=true note="in-game ok"
 
 这是 **modeler 的施工清单 + reviewer 的对照依据**，不是代码输入。
 **没有任何模块会把 blueprint 编译成几何** —— modeler 拿到它之后，仍然是在 Blockbench 里建模。
-`parts[].cubes` 可以先留空，但 `parts` 和 `bones` 必须存在（gate 只检查这两项非空）。
+
+`parts[].cubes` **永远留空**。gate 只检查 `parts` 和 `bones` 非空，没有任何代码读 `cubes`；
+把 `from`/`to` 写进去不代表建模，几何只在 Blockbench 里建。
 详见 [why-not-one-shot.md](why-not-one-shot.md) 第 1 节。
 
 > 实物参考：[`examples/ksg/ksg-blueprint.json`](../examples/ksg/ksg-blueprint.json)
