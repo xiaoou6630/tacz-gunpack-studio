@@ -1,15 +1,25 @@
-# researcher — 经验记录
+# researcher — lesson log
 
-完整历史经验，默认不进入系统提示词；需要时由 learner 或角色自己读取。
+Full history, kept out of the system prompt by default. The learner or the role
+itself reads this file when it needs the long form.
 
 ## Learned lesson — 2026-10-30T12:16:12.385Z
 
-DP-12 双枪管是左右并列（side-by-side），不是上下并列（over-under）；写 brief 前必须用参考图或官方规格确认枪管排布，并在 `notes` 里明确写出「左右并列」这一结论及其来源。
+DP-12's two barrels are side-by-side, not over-under. Confirm barrel layout
+against a reference image or the official specification before writing the brief,
+and state the conclusion and its source explicitly in `notes`. Getting this wrong
+sends the modeler straight into a rebuild.
 
 ## Learned lesson — 2026-10-30T12:16:16.270Z
 
-DP-12 是单扳机两次扣压（右管先、左管后），不是双扳机；brief 的 parts/notes 里写「双扳机」会让建模方直接返工，触发机构描述必须与查证来源一致。
+DP-12 fires from a single trigger pulled twice (right barrel first, then left);
+it is not a double-trigger gun. Writing "double trigger" in the brief's
+parts/notes forces the modeler to rework the mechanism, so any description of the
+action must match a verified source.
 
 ## Learned lesson — 2026-10-30T12:16:18.748Z
 
-TACZ 内置弹药 id（如 `tacz:12g`）必须用模板默认值或弹药对照表交叉核实后才能写进 brief，不要凭印象；写错 ammo id 会让 `tacz_pack action="validate"` 直接报 error 并触发返工。
+TACZ built-in ammunition ids (such as `tacz:12g`) must be cross-checked against
+the template default or an ammunition reference table before they go into the
+brief. Do not write one from memory: a wrong ammo id makes
+`tacz_pack action="validate"` report an error and triggers rework.

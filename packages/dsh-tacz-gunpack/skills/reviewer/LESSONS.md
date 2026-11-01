@@ -1,6 +1,7 @@
-# reviewer — 经验记录
+# reviewer — lesson log
 
-完整历史经验，默认不进入系统提示词；需要时由 learner 或角色自己读取。
+Full history, kept out of the system prompt by default. The learner or the role
+itself reads this file when it needs the long form.
 
 ## Learned lessons
 
@@ -9,8 +10,17 @@
 
 ## Learned lesson — 2026-10-30T12:16:12.316Z
 
-判定共面面是否「可见」时，必须在重叠矩形上采样、沿各自法线做约 4 unit 的 Ray-AABB 遮挡测试，只有射线上无任何其他方块实体才算暴露面；仅判断采样点是否落在某方块内部，会把「贴板内侧面与本体共面」误判成可见（DP-12 首轮 22 对 → 实际 5 对）。
+Deciding whether a co-planar face is actually *visible* requires sampling across
+the overlapping rectangle and casting a roughly 4-unit ray along each face's
+normal through the model. Only a ray that hits no other cube geometry counts as
+an exposed face. Testing merely whether the sample point falls inside some cube
+misreads "a plate's inner face is co-planar with the body" as visible — DP-12's
+first round reported 22 pairs where only 5 were real.
 
 ## Learned lesson — 2026-10-30T12:16:16.240Z
 
-几何一改，`tacz_gun export` 就会重排 UV 图集，上一轮的 UV 唯一性/越界结论全部作废；每轮 review 都要在最新 export 产物上重跑逐面 UV 矩形检查（唯一、无重叠、无越界、无全透明可见面），不能引用上轮结论。
+The moment the geometry changes, `tacz_gun export` re-lays the UV atlas and every
+UV uniqueness or bounds conclusion from the previous round is void. Each review
+must re-run the per-face UV checks on the newest export — unique, no overlap, no
+out-of-bounds, no fully transparent visible face — and must not cite last round's
+result.

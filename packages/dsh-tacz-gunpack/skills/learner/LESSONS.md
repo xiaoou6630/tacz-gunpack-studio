@@ -1,11 +1,20 @@
-# learner — 经验记录
+# learner — lesson log
 
-完整历史经验，默认不进入系统提示词；需要时由 learner 或角色自己读取。
+Full history, kept out of the system prompt by default. The learner or the role
+itself reads this file when it needs the long form.
 
 ## Learned lesson — 2026-10-30T12:16:12.405Z
 
-TACZ 全尺寸枪模（>11 unit）的 64px 图标必须单独验收 bbox、长宽比与透明底，因为 `tacz_icon_render` 的 side 相机会裁切超窗模型；图标与贴图/几何要分开取证，不能因为贴图检查通过就默认图标通过。
+A full-size TACZ model (over 11 units) needs its 64px icon accepted separately on
+bounding box, aspect ratio and transparent background, because
+`tacz_icon_render`'s side camera crops anything wider than its window. Collect
+icon evidence independently of texture and geometry: a passing texture check does
+not imply a passing icon.
 
 ## Learned lesson — 2026-10-30T12:16:16.279Z
 
-打包前必须核对 zip 条目数 = 计划交付的资源文件数，并逐个列名比对；残留的探测/临时文件会被 `tacz_pack` 计入 files 数（本轮 11 → 应 10），发现后重写 zip 剔除，不要留待下轮。
+Before packaging, verify that the zip entry count equals the number of files the
+delivery plan names, and compare the two lists entry by entry. Leftover probe or
+temporary files are counted by `tacz_pack` as files (this round 11 where 10 were
+expected). Rewrite the zip to drop them rather than carrying the problem into the
+next round.
