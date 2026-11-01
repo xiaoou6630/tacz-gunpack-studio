@@ -124,17 +124,23 @@ report(png.coverage >= 20, "atlas_coverage", `${png.coverage}% of the atlas carr
 
 // UV rectangles: unique, inside bounds, not degenerate.
 const rects = [];
+let maxU = 0;
+let maxV = 0;
 let outOfBounds = 0;
 for (const cube of cubes) {
   const uv = cube.uv;
   if (Array.isArray(uv) && uv.length === 2) {
     rects.push(`${uv[0]},${uv[1]}`);
+    maxV = Math.max(maxV, uv[1]);
+    maxU = Math.max(maxU, uv[0]);
   } else if (uv && typeof uv === "object") {
     for (const face of Object.values(uv)) {
       if (!face || !face.uv) continue;
       const [u, v] = face.uv;
       const [w, h] = face.uv_size ?? [0, 0];
       if (u < 0 || v < 0 || u + w > atlasWidth || v + h > atlasHeight) outOfBounds++;
+      maxU = Math.max(maxU, u + w);
+      maxV = Math.max(maxV, v + h);
       rects.push(`${u},${v},${w},${h}`);
     }
   }
@@ -142,6 +148,13 @@ for (const cube of cubes) {
 const unique = new Set(rects).size;
 report(unique === rects.length, "uv_unique", `${unique} of ${rects.length} rectangles are unique`);
 report(outOfBounds === 0, "uv_bounds", outOfBounds === 0 ? `all inside ${atlasWidth}x${atlasHeight}` : `${outOfBounds} outside the ${atlasWidth}x${atlasHeight} atlas`);
+
+// Auto UV packs upward from v=0, so the bottom rows of the atlas often stay
+// empty. KSG left 23% of its height unused and DP-12 left 26%; both shipped
+// anyway, so this is advisory rather than a hard failure.
+const usedHeight = maxV / atlasHeight * 100;
+const usedWidth = maxU / atlasWidth * 100;
+advise(usedHeight >= 85, "uv_fill", `UVs reach ${Math.round(usedHeight)}% of the atlas height and ${Math.round(usedWidth)}% of its width (${Math.round(100 - usedHeight)}% of the height unused)`);
 
 // ---------------------------------------------------------------- verdict
 console.log("");

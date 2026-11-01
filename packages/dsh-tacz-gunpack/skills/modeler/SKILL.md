@@ -24,13 +24,14 @@ whenToUse: Use when a TACZ design brief needs a rig, geometry, UVs, texture, ico
 3. Read `tacz_template_list` for category defaults. Keep `camera`, `root`, `AKM`, `positioning`, `views`, and locator groups.
 4. **Rig first** — create the bones that must move: bolt, magazine, safety, trigger, pump, barrels, hammer. Each moving part gets its own bone; pivots sit at the real rotation point. Keep `lefthand` / `righthand` / `camera` / `constraint` groups.
 5. **Blockout** in this order: receiver → barrel/handguard → stock → grip → magazine → sights → muzzle. Batch cubes: one `place_cube` call with multiple elements per pass, not one cube per step.
-6. `tacz_texture_init` 128×128. It assigns Auto UV and paints each face with a material colour derived from the **cube name**.
+6. `tacz_texture_init` assigns Auto UV and paints each face with one flat material colour derived from the **cube name**. That is a base coat, not a texture: its ceiling is one colour per face plus a 1px bevel, measured at 5–9 distinct colours. **Then paint.** DP-12 (217 colours) and KSG (430) both got there by shading face by face after the base coat, not by running `tacz_texture_init` harder.
+   - **Size the atlas to the work, not to the default.** 256×256 leaves room for 1356 unique rectangles; 128×128 is enough only for a simple gun. KSG used 256 and DP-12 used 128 — pick what fits, and state it in the handoff.
    - **Name every cube after its part** (`receiver_core`, `barrel_body`, `stock_butt`, `grip_wall`…). A cube left named `AKM` matches no material rule and the whole gun comes out one flat grey.
    - **`AKM` is a group, not a cube name.** TACZ's template bone chain is `root → bone2 → AKM → positioning2`, and every gun keeps it because the state machine, animations and attachment system resolve nodes by that chain. Never delete `AKM`, `camera`, `root`, `positioning`, `views` or the locators.
    - **Why cubes end up named `AKM`:** Bedrock geometry cubes carry only `origin`, `size` and `uv` — there is no `name` field. Exporting drops every cube name, and reopening a `*_geo.json` names each cube after its bone. So a project that was named correctly can come back with 63 cubes all called `AKM`. If you reopen an exported geo, re-name the cubes before running `tacz_texture_init`, or the atlas pass will paint them all `steel`.
-   - **Never fill the atlas with a single colour.** `paint_fill_tool` with `fill_mode="color"` on a fresh atlas repaints all 128×128 pixels; that is what turns a gun into a solid block of one hue. Restrict painting to `fill_mode="face"` or `selection`.
-   - Only use colours from the palette in `lib/tacz/constants.ts` (`TACZ_MATERIALS`), or colours sampled from the design brief's `palette.swatches`. Do not invent a colour.
-   - Keep a 1px bevel and no fully transparent visible faces.
+   - **Never fill the atlas with one colour.** `paint_fill_tool` with `fill_mode="color"` repaints every pixel of the canvas; that is what turns a gun into a solid block of one hue. Restrict fills to `fill_mode="face"` or `selection`. This is the one painting rule that must not bend.
+   - **Colours come from evidence, not imagination.** Sample them from the design brief's `palette.swatches` (the researcher derives these from real reference photos) or from the reference images directly. `TACZ_MATERIALS` is a starting palette for the base coat, not a limit on shading — DP-12's 217 colours and KSG's 430 are all off-palette shades. What is forbidden is a colour with no source behind it.
+   - **Use the whole atlas.** Auto UV packs upward from v=0, so the bottom rows often stay empty: KSG left 23% of its height unused and DP-12 left 26%. After Auto UV, either scale the layout to fill the atlas or shrink the canvas to what is actually used.
    - Target: ≥64 distinct colours and ≥20% atlas coverage. `tacz_model_validate` fails the model otherwise.
 7. Textures/geometry milestone → one `capture_screenshot` from front/right/iso; fix silhouette issues before more detail. Do not screenshot after every cube.
 8. **Verify with numbers, not with your eyes.** The two packs that shipped clean (DP-12 and KSG) were not built better, they were *checked harder*: every pass ended with a script that re-read the exported files and printed measurements. Run:
@@ -50,6 +51,29 @@ whenToUse: Use when a TACZ design brief needs a rig, geometry, UVs, texture, ico
 11. **Re-check after every export.** `tacz_gun export` re-lays the UV atlas, so any UV conclusion from before the export is stale. Re-run step 8 every time; do not reuse earlier results.
 12. If the brief requires animation, export the animation-ready rig and hand the bone list to data-smith.
 13. Archive the editable project: `export_model codec_id="project"` to `<workspace>/models/<gun>.bbmodel` before handoff; never leave the only copy in the live Blockbench session.
+
+## Audit your own work, then reopen
+
+The KSG build that shipped well was not built in one pass. Its history holds four `REOPEN` entries, and the one that mattered most reads:
+
+> art standard audit: **37.5 grid vs 31.8**, **69 cubes LOD-level**, **6361 UV overlaps**, **36 colours**
+
+Nobody told it that. It audited itself, found four concrete defects, and went back. That loop is the difference between a good pack and a stuck one — not a better model, not a better prompt.
+
+**After every export, audit before advancing.** Answer these from measurements, not from memory:
+
+| Ask | Measure with |
+|---|---|
+| Is the overall size right? | `check-pack-geometry.mjs` bounds vs `design-brief.json` `scale.tacz_units.overall` |
+| Enough detail? | `cube_count` |
+| Any UV overlap? | `uv_unique` |
+| Enough colours? | `distinct_colours` |
+| Is the atlas used? | `atlas_coverage` and the UV v-range |
+| Any floating or co-planar parts? | the two advisory warnings |
+
+**When the audit finds a defect, `tacz_build action="reopen"`** with the numbers in `note` — for example `reopen stage=GEOMETRY note="37.5 grid vs 31.8; 69 cubes; 6361 UV overlaps"`. Do not wait for a gate to block you, and do not advance on the assumption that the previous pass was fine.
+
+**The contract can be wrong, and reality wins.** KSG's own rig contract specified 37.5 units, 10 high and 5 wide; the finished gun is 31.8 / 8.5 / 3.7 because the real weapon measures 26.1 in, which is 31.8 units at 48 per metre. When a contract number contradicts the real-world dimension in the design brief, follow the real dimension and record why in the `REOPEN` note. The same contract asked for a 128×128 atlas; the shipped pack uses 256×256 because 1356 unique UV rectangles do not fit in 128.
 
 ## When a gate keeps failing
 
