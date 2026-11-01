@@ -45,8 +45,13 @@ BBPlugin.register("mcp", {
   bug_tracker: "https://github.com/xiaoou6630/tacz-gunpack-studio/issues",
   icon: getIcon(),
   variant: "desktop",
-  // requireNativeModule() permission handling first shipped in Blockbench 5.0.
-  min_version: "5.0.0",
+  // requireNativeModule() permission handling first shipped in Blockbench 5.0,
+  // but this fork's TACZ tooling is verified on 5.2.2: `Settings.set` was
+  // removed there (writeSetting falls back to Settings.stored + Settings.save),
+  // and animation import depends on createKeyframe(values, time, channel,
+  // undo, select) plus the 1..120 snapping clamp, whose behaviour is not
+  // guaranteed across 5.x. Declare what is actually tested.
+  min_version: "5.2.0",
   async onload() {
     // Get network module with Blockbench permission handling
     // @ts-ignore - requireNativeModule is a Blockbench global

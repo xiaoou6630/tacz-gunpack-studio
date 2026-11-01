@@ -22,15 +22,63 @@ TACZ 枪包 = 模型 + 贴图 + 图标 + 一堆 JSON。手工做一遍要反复�
 
 核心约束：**美术侧永不写数据，数据侧永不建模。** 两边靠本地 HTTP MCP 端点通信，不共享文件所有权，所以不会互相踩。
 
+### 架构一览
+
+```
+┌─────────────────────────┐        ┌─────────────────────────┐
+│  DeepSeek Harness       │        │  Blockbench 5.2+        │
+│  数据侧（MIT）           │        │  美术侧（GPL-3.0）       │
+│                         │        │                         │
+│  tacz_build   构建控制器 │        │  tacz_pack   建包/校验   │
+│  tacz_verify  交叉校验   │        │  tacz_gun    建枪/导出   │
+│  tacz_item    弹药配件   │        │  tacz_ammo   弹药美术    │
+│  tacz_spec    官方基准   │        │  tacz_attachment 配件美术│
+│  tacz_skill   自学习     │        │  tacz_icon_render 图标   │
+│  tacz_reference 参考图   │        │  tacz_model_validate     │
+│                         │        │  tacz_texture_init       │
+│  写 JSON                │        │  写 geo/PNG/bbmodel      │
+└───────────┬─────────────┘        └───────────▲─────────────┘
+            │                                  │
+            │  MCP client  ─── HTTP ─── MCP server
+            │  http://127.0.0.1:3000/bb-mcp
+            ▼                                  │
+     DSH 的 Agent Teams 六个角色 ──────────────┘
+```
+
+- **DSH 是 MCP client，Blockbench 是 MCP server**，走 `streamable-http`。
+- 端点可改（`mcp_host` / `mcp_port` / `mcp_endpoint`），DSH 侧用 `mcpUrl` 或 `tacz_install_mcp` 跟随。
+- 两个插件**不共享文件所有权**，也不互相 import。
+
+### 版本兼容
+
+| 组件 | 要求 | 说明 |
+|---|---|---|
+| Blockbench | **5.2+**（基准 5.2.2） | 见下方说明 |
+| DeepSeek Harness | `>=0.2.1-rc.5 <0.3.0` | 写在 `engines.dsh` |
+| Node.js | `>=20` | DSH 插件用 |
+
+Blockbench 侧对版本敏感的地方（都已做兼容或已实测）：
+
+| API | 5.0–5.1 | 5.2+ | 本插件做法 |
+|---|---|---|---|
+| `Settings.set` | 有 | **已移除** | `writeSetting()` 双路径：有就用，没有就写 `Settings.stored[id].value` + `Settings.save()` |
+| `createKeyframe` | 未实测 | `(values, time, channel, undo, select)` | 按 5.2.2 签名调用 |
+| `Timeline.snapTime` | 未实测 | `snapping` 被 clamp 到 1–120 | 导入时设 `snapping: 120` |
+| `getClientVersion` | 有 | 有 | 轮询等待，不依赖 `notifications/initialized` |
+
 ---
 
 ## 安装（三步）
 
 ### 前置要求
 
-- **Blockbench 5.0+**（桌面版）
+- **Blockbench 5.2+**（桌面版）— 实测基准 5.2.2
 - **DeepSeek Harness 0.2.1-rc.5 ~ 0.2.x**
 - Node.js 20+（DSH 插件用）
+
+> 为什么不是 5.0+：`Settings.set` 在 5.2 被移除（本插件已做双路径兼容），
+> 但动画导入依赖 `createKeyframe(values, time, channel, undo, select)` 的签名和
+> `snapping` 的 1–120 限制，这些在 5.x 各版本间不保证一致。5.0/5.1 未实测。
 
 ### 1. Blockbench 装插件
 

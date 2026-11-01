@@ -40,7 +40,8 @@ const markers = [
   ["B animation text", "animationText:anText"],
   ["B snapping", "snapping:120"],
   ["B exact time", "kf.time=time"],
-  ["C client info", "queueMicrotask(()=>{try{let ho=Js.getClientVersion()"],
+  ["C client info", "pollClient"],
+  ["D min_version", 'min_version:"5.2.0"'],
 ];
 for (const [label, needle] of markers) {
   console.log(`  ${source.includes(needle) ? "ok  " : "MISS"} ${label}`);
